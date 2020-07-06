@@ -2,6 +2,7 @@
 #include <unique_id.h>
 #include <servo.h>
 #include <apa102.h>
+#include <ht16k33.h>
 
 //static TaskHandle_t s_battery_monitor_task;
 
@@ -21,8 +22,16 @@ void app_main()
 	apa102_t ledstrip = APA102_DEFAULT;
 	apa102_init(&ledstrip);
 
+	ht16k33_t display = HT16K33_DEFAULT;
+	display.address = 0x71;
+
+	ht16k33_init(&display);
+
+	ESP_LOGW("display", "%d %d 0x%02x", display.i2c_pin_sda, display.i2c_pin_scl, display.address);	
+
 	for(;;)	{
 		apa102_refresh(&ledstrip, app_refresh, NULL);
+		ht16k33_display(&display);
 		vTaskDelay(10/portTICK_PERIOD_MS);
 	}
 	//apa102_destroy(&ledstrip);

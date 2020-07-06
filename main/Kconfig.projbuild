@@ -1,4 +1,21 @@
 menu "LMTZ Components"
+	menu "Adafruit HT16K33 Leds"
+		config HT16K33_SDA
+			int
+			prompt "SDA GPIO Number"
+			default 21
+
+		config HT16K33_SCL
+			int
+			prompt "SCL GPIO Number"
+			default 22
+		
+		config HT16K33_FREQ
+			int
+			prompt "I2C Frequency"
+			default 100000
+	endmenu
+
 	menu "Ledstrip APA102"
 		config APA102_NUM_LEDS
 			int
