@@ -46,12 +46,12 @@ typedef struct
         const char* text;
 } ht16k33_t;
 
-#define HT16K33_DEFAULT { \
+#define HT16K33_DEFAULT(addr) { \
 	.i2c_port = CONFIG_HT16K33_PORT, \
 	.i2c_freq = CONFIG_HT16K33_FREQ, \
 	.i2c_pin_sda = CONFIG_HT16K33_SDA, \
 	.i2c_pin_scl = CONFIG_HT16K33_SCL, \
-	.address = 0x70, \
+	.address = (addr), \
 	.brightness = 10, \
 	.blinkmode = 0, \
 	.number = 0xFFFFFFFF, \
@@ -60,5 +60,4 @@ typedef struct
 
 esp_err_t ht16k33_init(ht16k33_t* h);
 esp_err_t ht16k33_destroy(ht16k33_t* h);
-esp_err_t ht16k33_display(ht16k33_t* h);
-
+esp_err_t ht16k33_update(ht16k33_t* h);

@@ -22,14 +22,14 @@ esp_err_t apa102_init(apa102_t* self)
 		self->txbuffer[1+i] = 0xFF000011;
 	}
 	self->txbuffer[1+CONFIG_APA102_NUM_LEDS] = 0xFFFFFFFF;
-	
+
 	spi_bus_initialize(self->spi_host, &self->bus_config, self->dma_channel);
 	spi_bus_add_device(self->spi_host, &self->dev_config, &self->device);
 
 	return ESP_OK;
 }
 
-esp_err_t apa102_refresh(apa102_t* self, apa102_refresh_cb cb, void* context)
+esp_err_t apa102_update(apa102_t* self, apa102_refresh_cb cb, void* context)
 {
 	if (!self->transaction.tx_buffer)
 	{
@@ -38,7 +38,7 @@ esp_err_t apa102_refresh(apa102_t* self, apa102_refresh_cb cb, void* context)
 	}
 
 	spi_device_queue_trans(self->device, &self->transaction, portMAX_DELAY);
-	
+
 	self->phase += 1;
 	cb(self, self->txbuffer+1, CONFIG_APA102_NUM_LEDS, context);
 

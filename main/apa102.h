@@ -68,7 +68,7 @@ typedef uint32_t apa102_color_t;
 	}\
 }
 
-typedef struct 
+typedef struct
 {
 	uint16_t phase;
 	apa102_color_t txbuffer[CONFIG_APA102_MAX_TRANSFER/sizeof(apa102_color_t)];
@@ -77,7 +77,7 @@ typedef struct
 	int dma_channel;
 
 	spi_bus_config_t bus_config;
-	spi_device_interface_config_t dev_config;	
+	spi_device_interface_config_t dev_config;
 	spi_transaction_t transaction;
 	spi_device_handle_t device;
 } apa102_t;
@@ -85,6 +85,5 @@ typedef struct
 typedef void (*apa102_refresh_cb)(apa102_t* sender, apa102_color_t* color, size_t len, void* context);
 
 esp_err_t apa102_init(apa102_t* self);
-esp_err_t apa102_refresh(apa102_t* self, apa102_refresh_cb cb, void* context);
+esp_err_t apa102_update(apa102_t* self, apa102_refresh_cb cb, void* context);
 esp_err_t apa102_destroy(apa102_t* self);
-

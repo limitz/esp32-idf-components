@@ -153,7 +153,7 @@ esp_err_t ht16k33_destroy(ht16k33_t* h)
 	return ESP_OK;
 }
 
-esp_err_t ht16k33_display(ht16k33_t* h)
+esp_err_t ht16k33_update(ht16k33_t* h)
 {
 	if (h->address)
 	{
@@ -162,45 +162,57 @@ esp_err_t ht16k33_display(ht16k33_t* h)
 		i2c_master_write_byte(cmd, (h->address << 1) | I2C_MASTER_WRITE, ACK_CHECK_ENABLE);
  		i2c_master_write_byte(cmd, 0x21, ACK_CHECK_ENABLE);
 		i2c_master_stop(cmd);
- 
+
 		esp_err_t ret = i2c_master_cmd_begin(h->i2c_port, cmd, 1000 / portTICK_RATE_MS);
        		i2c_cmd_link_delete(cmd);
-		ESP_ERROR_CHECK(ret);
+        #if I2C_BE_STRICT
+		    ESP_ERROR_CHECK(ret);
+        #else
+            if (ESP_OK != ret) return ret;
+        #endif
 	}
 	else return ESP_FAIL;
 
 	/* Check brightness: "-b" option */
-	if (h->brightness < 16) 
+	if (h->brightness < 16)
 	{
 		i2c_cmd_handle_t cmd = i2c_cmd_link_create();
 		i2c_master_start(cmd);
 		i2c_master_write_byte(cmd, (h->address << 1) | I2C_MASTER_WRITE, ACK_CHECK_ENABLE);
  		i2c_master_write_byte(cmd, HT16K33_CMD_BRIGHTNESS | h->brightness, ACK_CHECK_ENABLE);
 		i2c_master_stop(cmd);
- 
+
 		esp_err_t ret = i2c_master_cmd_begin(h->i2c_port, cmd, 1000 / portTICK_RATE_MS);
        		i2c_cmd_link_delete(cmd);
-		ESP_ERROR_CHECK(ret);
-	}
-   
-	if (h->blinkmode  < 4) 
+        #if I2C_BE_STRICT
+		    ESP_ERROR_CHECK(ret);
+        #else
+            if (ESP_OK != ret) return ret;
+        #endif
+    }
+
+	if (h->blinkmode  < 4)
 	{
 		i2c_cmd_handle_t cmd = i2c_cmd_link_create();
 		i2c_master_start(cmd);
 		i2c_master_write_byte(cmd, (h->address << 1) | I2C_MASTER_WRITE, ACK_CHECK_ENABLE);
- 		i2c_master_write_byte(cmd, 
-				HT16K33_BLINK_CMD | HT16K33_BLINK_DISPLAYON | (h->blinkmode << 1), 
+ 		i2c_master_write_byte(cmd,
+				HT16K33_BLINK_CMD | HT16K33_BLINK_DISPLAYON | (h->blinkmode << 1),
 				ACK_CHECK_ENABLE);
 		i2c_master_stop(cmd);
- 
+
 		esp_err_t ret = i2c_master_cmd_begin(h->i2c_port, cmd, 1000 / portTICK_RATE_MS);
        		i2c_cmd_link_delete(cmd);
-		ESP_ERROR_CHECK(ret);
-	}
+		#if I2C_BE_STRICT
+		    ESP_ERROR_CHECK(ret);
+        #else
+            if (ESP_OK != ret) return ret;
+        #endif
+    }
 
 	if (!h->text)
 	{
-		int b = h->number;	
+		int b = h->number;
 		i2c_cmd_handle_t cmd = i2c_cmd_link_create();
 		i2c_master_start(cmd);
 		i2c_master_write_byte(cmd, (h->address << 1) | I2C_MASTER_WRITE, ACK_CHECK_ENABLE);
@@ -216,34 +228,41 @@ esp_err_t ht16k33_display(ht16k33_t* h)
 		i2c_master_write_byte(cmd, numbertable[(b/1) % 10], ACK_CHECK_ENABLE);
 		i2c_master_write_byte(cmd, 0x00, ACK_CHECK_ENABLE);
 		i2c_master_stop(cmd);
- 
+
 		esp_err_t ret = i2c_master_cmd_begin(h->i2c_port, cmd, 1000 / portTICK_RATE_MS);
        		i2c_cmd_link_delete(cmd);
-		ESP_ERROR_CHECK(ret);
-	}
+	    #if I2C_BE_STRICT
+		    ESP_ERROR_CHECK(ret);
+        #else
+            if (ESP_OK != ret) return ret;
+        #endif
+    }
 
 	if (h->text)
 	{
 		const char* b = h->text;
-		
+
 		i2c_cmd_handle_t cmd = i2c_cmd_link_create();
 		i2c_master_start(cmd);
 		i2c_master_write_byte(cmd, (h->address << 1) | I2C_MASTER_WRITE, ACK_CHECK_ENABLE);
  		i2c_master_write_byte(cmd, 0x00, ACK_CHECK_ENABLE);
-		
+
 		for (int i=0; i<4; i++)
 		{
 			uint16_t bitmask =  strlen(b) > i ? alphafonttable[(int) b[i]] : 0x00;
-			
+
 			i2c_master_write_byte(cmd, bitmask & 0xFF, ACK_CHECK_ENABLE);
 			i2c_master_write_byte(cmd, bitmask >> 8, ACK_CHECK_ENABLE);
 		}
 		i2c_master_stop(cmd);
- 
+
 		esp_err_t ret = i2c_master_cmd_begin(h->i2c_port, cmd, 1000 / portTICK_RATE_MS);
        		i2c_cmd_link_delete(cmd);
-		ESP_ERROR_CHECK(ret);
-	}
+		#if I2C_BE_STRICT
+		    ESP_ERROR_CHECK(ret);
+        #else
+            if (ESP_OK != ret) return ret;
+        #endif
+    }
 	return ESP_OK;
 }
-

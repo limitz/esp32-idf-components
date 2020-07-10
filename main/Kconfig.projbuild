@@ -9,7 +9,7 @@ menu "LMTZ Components"
 			int
 			prompt "SCL GPIO Number"
 			default 22
-		
+
 		config HT16K33_FREQ
 			int
 			prompt "I2C Frequency"
@@ -21,11 +21,11 @@ menu "LMTZ Components"
 			int
 			prompt "Number of leds"
 			default 8
-	
+
 		choice APA102_SPI_HOST
 			prompt "SPI host"
 			default APA102_SPI_HOST_HSPI
-	
+
 			config APA102_SPI_HOST_HSPI
 				bool "HSPI"
 			config APA102_SPI_HOST_VSPI
@@ -36,12 +36,12 @@ menu "LMTZ Components"
 			int
 			prompt "SPI: DMA channel"
 			default 2
-	
+
 		config APA102_MOSI_PIN
 			int
 			prompt "SPI: MOSI pin"
 			default 13
-			
+
 		config APA102_SCLK_PIN
 			int
 			prompt "SPI: SCLK pin"
@@ -58,6 +58,19 @@ menu "LMTZ Components"
 			int
 			prompt "ADC voltage sense pin"
 			default 34
+	endmenu
+
+	menu "Wifi"
+		config WIFI_SSID
+			string
+			prompt "SSID"
+			default "AUTOFILL"
+
+		config WIFI_PASSWORD
+			string
+			prompt "Password"
+			default "AUTOFILL"
+
 	endmenu
 
 endmenu
