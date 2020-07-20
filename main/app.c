@@ -8,12 +8,27 @@
 
 //static TaskHandle_t s_battery_monitor_task;
 
+#define BRIGHTNESS 0x1F
+
 void app_refresh(apa102_t* ledstrip, apa102_color_t* buffer, size_t len, void* context)
 {
-	uint16_t p = ledstrip->phase;
-	if (p<len) buffer[p] = 0xFF440033;
-	if (p & 0xF) return;
-	buffer[(p>>4)%len] ^= 0xFFFFFF00;
+	if (ledstrip->phase & 0xF) return;
+
+	uint16_t p = (ledstrip->phase>>4) % (CONFIG_LMTZ_APA102_NUM_LEDS/2);
+	for (int i=0; i<CONFIG_LMTZ_APA102_NUM_LEDS; i++)
+	{
+		if (i<CONFIG_LMTZ_APA102_NUM_LEDS/2 &&p == i)
+		{
+			buffer[i] = APA102_COLOR(0xFF,0x00, 0x11, BRIGHTNESS);
+			buffer[CONFIG_LMTZ_APA102_NUM_LEDS - i - 1] = APA102_COLOR(0xFF,0x33, 0x00, BRIGHTNESS);
+		}
+		else 
+		{
+			int b = buffer[i] & BRIGHTNESS;
+			buffer[i] = (buffer[i] ^ b) | (b*5/6); // APA102_COLOR(0x00,0x00, 0x00, 0x00);
+		}
+
+	}
 }
 
 int wifi_connected(wifi_t* wifi, int  e)
@@ -51,7 +66,7 @@ void app_main()
 	for(;;)	
 	{
 		
-		analog_input_update(&analog_in);
+		/*analog_input_update(&analog_in);
 		ESP_LOGI("ANALOG", "Last value: 0x%03X => %d mV (@ window index: %d)", 
 				analog_in.last_value, 
 				analog_in.last_voltage, 
@@ -61,14 +76,14 @@ void app_main()
 				analog_in.voltage, 
 				analog_in._window_count,
 				analog_in.window_size);
-
+		*/
 		apa102_update(&ledstrip, app_refresh, NULL);	
 		//display1.text = "IT'S";
 		//display2.text = "TIME";
 		//ht16k33_update(&display1);
 		//ht16k33_update(&display2);
 		
-		vTaskDelay(100/portTICK_PERIOD_MS);
+		vTaskDelay(1/portTICK_PERIOD_MS);
 		ESP_LOGI("---","---");
 	}
 

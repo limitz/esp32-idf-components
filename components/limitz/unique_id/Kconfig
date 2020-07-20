@@ -1,0 +1,21 @@
+menu "LIMITZ unique id"
+	choice LMTZ_UNIQUE_ID_SRC
+		prompt "Unique id source"
+		default LMTZ_UNIQUE_ID_FROM_MAC
+		help
+			You can get the unique id from the mac address or set it yourself.
+
+		config LMTZ_UNIQUE_ID_SRC_MAC
+			bool "Generate unique id from MAC address"
+		config LMTZ_UNIQUE_ID_SRC_MANUAL
+			bool "Create your own unique id"
+	endchoice
+
+	config LMTZ_UNIQUE_ID_MANUAL
+		depends on LMTZ_UNIQUE_ID_SRC_MANUAL
+		prompt "Manually assigned id"
+		string
+		default "LIMITZ"
+
+endmenu
+

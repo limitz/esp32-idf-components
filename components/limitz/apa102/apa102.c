@@ -15,13 +15,17 @@ static esp_err_t g_err;
 
 esp_err_t apa102_init(apa102_t* self)
 {
-	memset(self->txbuffer, 0, sizeof(self->txbuffer));
+	size_t size = (CONFIG_LMTZ_APA102_NUM_LEDS + 2) * sizeof(apa102_color_t);
+	
+	self->txbuffer = heap_caps_malloc(size,MALLOC_CAP_DMA);
+	memset(self->txbuffer, 0, size);
 	self->txbuffer[0] = 0x00000000;
-	for (int i=0; i<CONFIG_APA102_NUM_LEDS; i++)
+
+	for (int i=0; i<CONFIG_LMTZ_APA102_NUM_LEDS; i++)
 	{
-		self->txbuffer[1+i] = 0xFF000011;
+		self->txbuffer[1+i] = 0xE0000000;
 	}
-	self->txbuffer[1+CONFIG_APA102_NUM_LEDS] = 0xFFFFFFFF;
+	self->txbuffer[1+CONFIG_LMTZ_APA102_NUM_LEDS] = 0x00000000;
 
 	spi_bus_initialize(self->spi_host, &self->bus_config, self->dma_channel);
 	spi_bus_add_device(self->spi_host, &self->dev_config, &self->device);
@@ -34,13 +38,13 @@ esp_err_t apa102_update(apa102_t* self, apa102_refresh_cb cb, void* context)
 	if (!self->transaction.tx_buffer)
 	{
 		self->transaction.tx_buffer = self->txbuffer;
-		cb(self, self->txbuffer+1, CONFIG_APA102_NUM_LEDS, context);
+		cb(self, self->txbuffer+1, CONFIG_LMTZ_APA102_NUM_LEDS, context);
 	}
 
 	spi_device_queue_trans(self->device, &self->transaction, portMAX_DELAY);
 
 	self->phase += 1;
-	cb(self, self->txbuffer+1, CONFIG_APA102_NUM_LEDS, context);
+	cb(self, self->txbuffer+1, CONFIG_LMTZ_APA102_NUM_LEDS, context);
 
 	spi_transaction_t* t;
 	spi_device_get_trans_result(self->device, &t, portMAX_DELAY);
@@ -49,5 +53,7 @@ esp_err_t apa102_update(apa102_t* self, apa102_refresh_cb cb, void* context)
 
 esp_err_t apa102_destroy(apa102_t* self)
 {
+	free(self->txbuffer);
+
 	return ESP_OK;
 }

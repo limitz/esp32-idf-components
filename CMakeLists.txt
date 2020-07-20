@@ -3,4 +3,6 @@
 cmake_minimum_required(VERSION 3.5)
 
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
+list(APPEND EXTRA_COMPONENT_DIRS components/lvgl_esp32_drivers components/lvgl_esp32_drivers/lvgl_tft components/lvgl_esp32_drivers/lvgl_touch)
+list(APPEND EXTRA_COMPONENT_DIRS components/limitz)
 project(esp32-idf-components)
