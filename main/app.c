@@ -52,6 +52,12 @@ void app_main()
 	apa102_t ledstrip = APA102_DEFAULT;
 	apa102_init(&ledstrip);
 
+	servo_t steering = SERVO_1_DEFAULT;
+	servo_init(&steering);
+
+	ESP_LOGW("SERVO CONFIG", "MINMAX INPUT %d %d", steering._minValue_us, steering._maxValue_us);
+
+
 	//ht16k33_t display1 = HT16K33_DEFAULT(0x71);
 	//ht16k33_t display2 = HT16K33_DEFAULT(0x73);
 	//ht16k33_init(&display1);
@@ -65,50 +71,30 @@ void app_main()
 
 	for(;;)	
 	{
-		
-		/*analog_input_update(&analog_in);
-		ESP_LOGI("ANALOG", "Last value: 0x%03X => %d mV (@ window index: %d)", 
-				analog_in.last_value, 
-				analog_in.last_voltage, 
-				analog_in._window_index);
+		analog_input_update(&analog_in);
 
-		ESP_LOGI("ANALOG", "Sliding window: %d mV (%d out of %d measurements)", 
-				analog_in.voltage, 
-				analog_in._window_count,
-				analog_in.window_size);
-		*/
-		apa102_update(&ledstrip, app_refresh, NULL);	
+		//ESP_LOGI("ANALOG", "Last value: 0x%03X => %d mV (@ window index: %d)", 
+		//		analog_in.last_value, 
+		//		analog_in.last_voltage, 
+		//		analog_in._window_index);
+
+		//ESP_LOGI("ANALOG", "Sliding window: %d mV (%d out of %d measurements)", 
+		//		analog_in.voltage, 
+		//		analog_in._window_count,
+		//		analog_in.window_size);
+		
+		//apa102_update(&ledstrip, app_refresh, NULL);	
+		
+		servo_set(&steering, (analog_in.voltage / 17) - 100);
 		//display1.text = "IT'S";
 		//display2.text = "TIME";
 		//ht16k33_update(&display1);
 		//ht16k33_update(&display2);
 		
-		vTaskDelay(1/portTICK_PERIOD_MS);
-		ESP_LOGI("---","---");
+		vTaskDelay(1);
 	}
 
+	servo_destroy(&steering);
 	analog_input_destroy(&analog_in);
 	apa102_destroy(&ledstrip);
-
-#if 0
-	servo_t steering = {
-		.channel = LEDC_CHANNEL_0,
-		.minValue = 500,
-		.maxValue = 2800,
-		.pin = 13
-	};
-
-	servo_init(&steering);
-	servo_set(&steering, 0x8000);
-//	servo_destroy(&steering);
-//	servo_destroy(&steering);
-
-	xTaskCreate(
-		battery_monitor_task,
-		"Battery monitor",
-		2048, NULL, tskIDLE_PRIORITY,
-		&s_battery_monitor_task);
-
-	configASSERT(s_battery_monitor_task);
-#endif
 }
