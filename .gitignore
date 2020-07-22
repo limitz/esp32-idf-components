@@ -1,3 +1,4 @@
+*.old
 /build
 sdkconfig
 /components/lvgl

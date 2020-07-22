@@ -1,10 +1,12 @@
 #include <battery_monitor.h>
 #include <unique_id.h>
 #include <servo.h>
+#include <encoder.h>
 #include <apa102.h>
 #include <ht16k33.h>
 #include <wifi.h>
 #include <analog.h>
+#include "driver/gpio.h"
 
 //static TaskHandle_t s_battery_monitor_task;
 
@@ -52,6 +54,10 @@ void app_main()
 	apa102_t ledstrip = APA102_DEFAULT;
 	apa102_init(&ledstrip);
 
+
+	encoder_t enc1 = ENCODER_1_DEFAULT;
+	encoder_init(&enc1);
+	
 	servo_t steering = SERVO_1_DEFAULT;
 	servo_init(&steering);
 
@@ -72,6 +78,12 @@ void app_main()
 	for(;;)	
 	{
 		analog_input_update(&analog_in);
+		int a = gpio_get_level(21);
+		int b = gpio_get_level(22);
+
+		encoder_update(&enc1);
+
+		ESP_LOGI("ENCODER", "a:%d b:%d value = %d", a,b,enc1.value);
 
 		//ESP_LOGI("ANALOG", "Last value: 0x%03X => %d mV (@ window index: %d)", 
 		//		analog_in.last_value, 
@@ -91,7 +103,7 @@ void app_main()
 		//ht16k33_update(&display1);
 		//ht16k33_update(&display2);
 		
-		vTaskDelay(1);
+		vTaskDelay(5);
 	}
 
 	servo_destroy(&steering);

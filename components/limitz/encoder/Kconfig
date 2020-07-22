@@ -1,0 +1,67 @@
+menu "LIMITZ encoder"
+
+	# ENCODER 1
+	config LMTZ_ENCODER_1
+		bool
+		prompt "Enable encoder 1"
+		default n
+	
+	menu "Configuration"
+		depends on LMTZ_ENCODER_1
+
+		config LMTZ_ENCODER_1_UNIT
+			int
+			prompt "Pulse counter unit"
+			default 0
+
+		config LMTZ_ENCODER_1_CHANNEL
+			int
+			prompt "Pulse counter channel"
+			default 0
+
+		config LMTZ_ENCODER_1_PIN_A
+			int
+			prompt "GPIO pin A"
+			default 36
+	
+		config LMTZ_ENCODER_1_PIN_B
+			int
+			prompt "GPIO pin B"
+			default 37
+
+		config LMTZ_ENCODER_1_PIN_PB
+			int
+			prompt "GPIO pin for push button"
+			default -1
+		
+		config LMTZ_ENCODER_1_INIT_VALUE
+			int 
+			prompt "Init value"
+			default 0
+		
+		config LMTZ_ENCODER_1_MIN_VALUE
+			int 
+			prompt "Minimum value"
+			default -100
+
+		config LMTZ_ENCODER_1_MAX_VALUE
+			int
+			prompt "Maximum value"
+			default 100
+		config LMTZ_ENCODER_1_FILTER_VALUE
+			int
+			prompt "Filter value"
+			default 256
+
+		config LMTZ_ENCODER_1_PULSES_PER_STEP
+			int
+			prompt "Pulses per step" 
+			default 4
+
+		config LMTZ_ENCODER_1_DELTA_PER_STEP
+			int
+			prompt "Delta d(v) per step"
+			default 1 
+		
+	endmenu
+endmenu
