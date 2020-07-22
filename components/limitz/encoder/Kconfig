@@ -22,12 +22,12 @@ menu "LIMITZ encoder"
 		config LMTZ_ENCODER_1_PIN_A
 			int
 			prompt "GPIO pin A"
-			default 36
+			default 26
 	
 		config LMTZ_ENCODER_1_PIN_B
 			int
 			prompt "GPIO pin B"
-			default 37
+			default 27
 
 		config LMTZ_ENCODER_1_PIN_PB
 			int
