@@ -1,0 +1,50 @@
+menu "LIMITZ VFD driver"
+
+	config LMTZ_MAX6921_OUTPUTS
+		int
+		prompt "Number of VFD outputs"
+		default 32
+	
+	choice LMTZ_MAX6921_SPI
+		prompt "SPI host"
+		default LMTZ_MAX6921_SPI_HSPI
+
+		config LMTZ_MAX6921_SPI_HSPI
+			bool "HSPI"
+		
+		config LMTZ_MAX6921_SPI_VSPI
+			bool "VSPI"
+	endchoice
+
+		
+	config LMTZ_MAX6921_DMA_CHANNEL
+		int
+		prompt "SPI DMA channel" 
+		default 2
+
+	config LMTZ_MAX6921_PIN_MOSI
+		int
+		prompt "MOSI pin"
+		default 13
+
+	config LMTZ_MAX6921_PIN_SCLK
+		int
+		prompt "SCLK pin"
+		default 14
+
+	config LMTZ_MAX6921_PIN_LOAD
+		int
+		prompt "LOAD pin"
+		default 12
+
+	config LMTZ_MAX6921_PIN_BLANK
+		int
+		prompt "BLANK pin"
+		default 11
+
+	config LMTZ_MAX6921_CLOCK_SPEED
+		int
+		prompt "SPI Clock speed"
+		default 1000000
+
+endmenu

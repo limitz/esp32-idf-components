@@ -5,7 +5,7 @@
 #include <apa102.h>
 #include <ht16k33.h>
 #include <wifi.h>
-#include <analog.h>
+#include <adc.h>
 #include "driver/gpio.h"
 
 //static TaskHandle_t s_battery_monitor_task;
@@ -47,21 +47,28 @@ void app_main()
 	ESP_ERROR_CHECK( nvs_flash_init() );
 	ESP_LOGW("APP", "unique id = %s", unique_id());
 
-	analog_init();
-	analog_reference_on(27);
-	analog_input_t analog_in = ANALOG_INPUT_DEFAULT(33);
-	analog_input_init(&analog_in);
+#if CONFIG_LMTZ_ADC1
+	adc_t joy_x = ADC1;
+	adc_init(&joy_x);	
+#endif 
+
+#if CONFIG_LMTZ_ADC2
+	adc_t joy_y = ADC2;
+	adc_init(&joy_y);
+#endif
+
 	apa102_t ledstrip = APA102_DEFAULT;
 	apa102_init(&ledstrip);
 
-
+#if CONFIG_LMTZ_ENCODER_1
 	encoder_t enc1 = ENCODER_1_DEFAULT;
 	encoder_init(&enc1);
-	
-	servo_t steering = SERVO_1_DEFAULT;
-	servo_init(&steering);
+#endif
 
-	ESP_LOGW("SERVO CONFIG", "MINMAX INPUT %d %d", steering._minValue_us, steering._maxValue_us);
+	servo_t servo1 = SERVO1;
+	servo_t servo2 = SERVO2;
+	servo_init(&servo1);
+	servo_init(&servo2);
 
 
 	//ht16k33_t display1 = HT16K33_DEFAULT(0x71);
@@ -77,13 +84,23 @@ void app_main()
 
 	for(;;)	
 	{
-		analog_input_update(&analog_in);
-		int a = gpio_get_level(21);
-		int b = gpio_get_level(22);
+		int x = 1900;
+		int y = 1900;
+#if CONFIG_LMTZ_ADC1
+		adc_update(&joy_x);
+		x = joy_x.voltage;
+#endif
 
+#if CONFIG_LMTZ_ADC2
+		adc_update(&joy_y);
+		y = joy_y.voltage;
+#endif
+
+#if CONFIG_LMTZ_ENCODER_1
 		encoder_update(&enc1);
-
-		ESP_LOGI("ENCODER", "a:%d b:%d value = %d", a,b,enc1.value);
+		ESP_LOGI("ENCODER", "%d", a,b,enc1.value);
+#endif
+		ESP_LOGI("JOY", "x: %d, y: %d", x, y);
 
 		//ESP_LOGI("ANALOG", "Last value: 0x%03X => %d mV (@ window index: %d)", 
 		//		analog_in.last_value, 
@@ -97,16 +114,13 @@ void app_main()
 		
 		//apa102_update(&ledstrip, app_refresh, NULL);	
 		
-		servo_set(&steering, (analog_in.voltage / 17) - 100);
+		servo_set(&servo1, (x / 19) - 100);
+		servo_set(&servo2, (y/ 19) - 100);
 		//display1.text = "IT'S";
 		//display2.text = "TIME";
 		//ht16k33_update(&display1);
 		//ht16k33_update(&display2);
 		
-		vTaskDelay(5);
+		vTaskDelay(1);
 	}
-
-	servo_destroy(&steering);
-	analog_input_destroy(&analog_in);
-	apa102_destroy(&ledstrip);
 }

@@ -13,25 +13,25 @@ typedef struct
 	int pin;
 } servo_t;
 
-#if (CONFIG_LMTZ_SERVO_1)
-#define SERVO_1_DEFAULT { \
-	.channel = CONFIG_LMTZ_SERVO_1_CHANNEL, \
-	._minValue_us = CONFIG_LMTZ_SERVO_1_MIN_VALUE, \
-	._maxValue_us = CONFIG_LMTZ_SERVO_1_MAX_VALUE, \
-	.minInput = CONFIG_LMTZ_SERVO_1_MIN_INPUT,\
-	.maxInput = CONFIG_LMTZ_SERVO_1_MAX_INPUT,\
-	.pin = CONFIG_LMTZ_SERVO_1_PIN, \
+#if (CONFIG_LMTZ_SERVO1)
+#define SERVO1 { \
+	.channel = CONFIG_LMTZ_SERVO1_CHANNEL, \
+	._minValue_us = CONFIG_LMTZ_SERVO1_MIN_VALUE, \
+	._maxValue_us = CONFIG_LMTZ_SERVO1_MAX_VALUE, \
+	.minInput = CONFIG_LMTZ_SERVO1_MIN_INPUT,\
+	.maxInput = CONFIG_LMTZ_SERVO1_MAX_INPUT,\
+	.pin = CONFIG_LMTZ_SERVO1_PIN, \
 }
 #endif
 
-#if (CONFIG_LMTZ_SERVO_2)
-#define SERVO_2_DEFAULT { \
-	.channel = CONFIG_LMTZ_SERVO_2_CHANNEL, \
-	._minValue_us = CONFIG_LMTZ_SERVO_2_MIN_VALUE, \
-	._maxValue_us = CONFIG_LMTZ_SERVO_2_MAX_VALUE, \
-	.minInput = CONFIG_LMTZ_SERVO_2_MIN_INPUT,\
-	.maxInput = CONFIG_LMTZ_SERVO_2_MAX_INPUT,\
-	.pin = CONFIG_LMTZ_SERVO_2_PIN, \
+#if (CONFIG_LMTZ_SERVO2)
+#define SERVO2 { \
+	.channel = CONFIG_LMTZ_SERVO2_CHANNEL, \
+	._minValue_us = CONFIG_LMTZ_SERVO2_MIN_VALUE, \
+	._maxValue_us = CONFIG_LMTZ_SERVO2_MAX_VALUE, \
+	.minInput = CONFIG_LMTZ_SERVO2_MIN_INPUT,\
+	.maxInput = CONFIG_LMTZ_SERVO2_MAX_INPUT,\
+	.pin = CONFIG_LMTZ_SERVO2_PIN, \
 }
 #endif
 

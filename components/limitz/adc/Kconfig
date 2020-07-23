@@ -1,0 +1,192 @@
+menu "LIMITZ ADC"
+
+	# ADC1
+	config LMTZ_ADC1
+		bool
+		prompt "Enable ADC 1"
+		default n
+	
+
+		choice LMTZ_ADC1_CHANNEL_SELECT
+			depends on LMTZ_ADC1
+			prompt "ADC1 channel"
+			default LMTZ_ADC1_CHANNEL0
+
+			config LMTZ_ADC1_CHANNEL0
+			bool "Channel 0, pin 36"
+
+			config LMTZ_ADC1_CHANNEL1
+			bool "Channel 1, pin 37"
+
+			config LMTZ_ADC1_CHANNEL2
+			bool "Channel 2, pin 38"
+
+			config LMTZ_ADC1_CHANNEL3
+			bool "Channel 3, pin 39"
+
+			config LMTZ_ADC1_CHANNEL4
+			bool "Channel 4, pin 32"
+
+			config LMTZ_ADC1_CHANNEL5
+			bool "Channel 5, pin 33"
+
+			config LMTZ_ADC1_CHANNEL6
+			bool "Channel 6, pin 34"
+
+			config LMTZ_ADC1_CHANNEL7
+			bool "Channel 7, pin 35"
+
+		endchoice
+
+		choice LMTZ_ADC1_WINDOW_SELECT
+			depends on LMTZ_ADC1
+			prompt "ADC1 window mode"
+			default LMTZ_ADC1_WINDOW16
+
+			config LMTZ_ADC1_WINDOW0
+			bool "No sliding window"
+
+			config LMTZ_ADC1_WINDOW4
+			bool "Sliding window (4)"
+
+			config LMTZ_ADC1_WINDOW16
+			bool "Sliding window (16)"
+			
+			config LMTZ_ADC1_WINDOW32
+			bool "Sliding window (32"
+
+			config LMTZ_ADC1_WINDOW64
+			bool "Sliding window (64)"
+		endchoice
+
+
+		config LMTZ_ADC1_WINDOW_SIZE
+			depends on LMTZ_ADC1
+			int
+			default 0 if LMTZ_ADC1_WINDOW0
+			default 4 if LMTZ_ADC1_WINDOW4
+			default 16 if LMTZ_ADC1_WINDOW16
+			default 32 if LMTZ_ADC1_WINDOW32
+			default 64 if LMTZ_ADC1_WINDOW64
+			default 16
+
+		config LMTZ_ADC1_CHANNEL
+			depends on LMTZ_ADC1
+			int
+			default 0 if LMTZ_ADC1_CHANNEL0
+			default 1 if LMTZ_ADC1_CHANNEL1
+			default 2 if LMTZ_ADC1_CHANNEL2
+			default 3 if LMTZ_ADC1_CHANNEL3
+			default 4 if LMTZ_ADC1_CHANNEL4
+			default 5 if LMTZ_ADC1_CHANNEL5
+			default 6 if LMTZ_ADC1_CHANNEL6
+			default 7 if LMTZ_ADC1_CHANNEL7
+			default -1
+
+		config LMTZ_ADC1_PIN
+			depends on LMTZ_ADC1
+			int 
+			default 36 if LMTZ_ADC1_CHANNEL0
+			default 37 if LMTZ_ADC1_CHANNEL1
+			default 38 if LMTZ_ADC1_CHANNEL2
+			default 39 if LMTZ_ADC1_CHANNEL3
+			default 32 if LMTZ_ADC1_CHANNEL4
+			default 33 if LMTZ_ADC1_CHANNEL5
+			default 34 if LMTZ_ADC1_CHANNEL6
+			default 35 if LMTZ_ADC1_CHANNEL7
+			default -1
+
+	# ADC2
+	config LMTZ_ADC2
+		bool
+		prompt "Enable ADC 2"
+		default n
+	
+
+		choice LMTZ_ADC2_CHANNEL_SELECT
+			depends on LMTZ_ADC2
+			prompt "ADC2 channel"
+			default LMTZ_ADC2_CHANNEL0
+
+			config LMTZ_ADC2_CHANNEL0
+			bool "Channel 0, pin 36"
+
+			config LMTZ_ADC2_CHANNEL1
+			bool "Channel 1, pin 37"
+
+			config LMTZ_ADC2_CHANNEL2
+			bool "Channel 2, pin 38"
+
+			config LMTZ_ADC2_CHANNEL3
+			bool "Channel 3, pin 39"
+
+			config LMTZ_ADC2_CHANNEL4
+			bool "Channel 4, pin 32"
+
+			config LMTZ_ADC2_CHANNEL5
+			bool "Channel 5, pin 33"
+
+			config LMTZ_ADC2_CHANNEL6
+			bool "Channel 6, pin 34"
+
+			config LMTZ_ADC2_CHANNEL7
+			bool "Channel 7, pin 35"
+
+		endchoice
+
+		choice LMTZ_ADC2_WINDOW_SELECT
+			depends on LMTZ_ADC2
+			prompt "ADC2 window mode"
+			default LMTZ_ADC2_WINDOW16
+
+			config LMTZ_ADC2_WINDOW0
+			bool "No sliding window"
+
+			config LMTZ_ADC2_WINDOW4
+			bool "Sliding window (4)"
+
+			config LMTZ_ADC2_WINDOW16
+			bool "Sliding window (16)"
+			
+			config LMTZ_ADC2_WINDOW32
+			bool "Sliding window (32"
+
+			config LMTZ_ADC2_WINDOW64
+			bool "Sliding window (64)"
+		endchoice
+
+
+		config LMTZ_ADC2_WINDOW_SIZE
+			int
+			default 0 if LMTZ_ADC2_WINDOW0
+			default 4 if LMTZ_ADC2_WINDOW4
+			default 16 if LMTZ_ADC2_WINDOW16
+			default 32 if LMTZ_ADC2_WINDOW32
+			default 64 if LMTZ_ADC2_WINDOW64
+			default 16
+
+		config LMTZ_ADC2_CHANNEL
+			int
+			default 0 if LMTZ_ADC2_CHANNEL0
+			default 1 if LMTZ_ADC2_CHANNEL1
+			default 2 if LMTZ_ADC2_CHANNEL2
+			default 3 if LMTZ_ADC2_CHANNEL3
+			default 4 if LMTZ_ADC2_CHANNEL4
+			default 5 if LMTZ_ADC2_CHANNEL5
+			default 6 if LMTZ_ADC2_CHANNEL6
+			default 7 if LMTZ_ADC2_CHANNEL7
+			default -1
+
+		config LMTZ_ADC2_PIN
+			int 
+			default 36 if LMTZ_ADC2_CHANNEL0
+			default 37 if LMTZ_ADC2_CHANNEL1
+			default 38 if LMTZ_ADC2_CHANNEL2
+			default 39 if LMTZ_ADC2_CHANNEL3
+			default 32 if LMTZ_ADC2_CHANNEL4
+			default 33 if LMTZ_ADC2_CHANNEL5
+			default 34 if LMTZ_ADC2_CHANNEL6
+			default 35 if LMTZ_ADC2_CHANNEL7
+			default -1
+
+endmenu

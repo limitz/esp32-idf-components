@@ -1,32 +1,32 @@
-#include <analog.h> 
+#include <adc.h> 
 
-#define TAG "ANALOG"
+#define TAG "ADC"
 #define ADC_DEFAULT_VREF 	1100
-#define ADC_NUM_SAMPLES 	16
-#define ADC_BITDEPTH 		ADC_WIDTH_BIT_12
-#define ADC_ATTENUATION 	ADC_ATTEN_DB_11
+#define ADC_DEFAULT_NUM_SAMPLES	16
+#define ADC_DEFAULT_BITDEPTH 	ADC_WIDTH_BIT_12
+#define ADC_DEFAULT_ATTENUATION	ADC_ATTEN_DB_11
 
 static esp_adc_cal_characteristics_t s_calibration = { 0 };
-static esp_adc_cal_value_t s_calibration_value;
+static esp_adc_cal_value_t s_calibration_value = 0;
 
-int analog_init()
+int adc_init(adc_t* self)
 {
-	adc1_config_width(ADC_BITDEPTH);
-	s_calibration_value = esp_adc_cal_characterize(
+	if (!s_calibration_value)
+	{
+		adc1_config_width(ADC_DEFAULT_BITDEPTH);
+		s_calibration_value = esp_adc_cal_characterize(
 			ADC_UNIT_1,
-			ADC_ATTENUATION,
-			ADC_BITDEPTH,
+			ADC_DEFAULT_ATTENUATION,
+			ADC_DEFAULT_BITDEPTH,
 			ADC_DEFAULT_VREF,
 			&s_calibration);
-	return 0;
-}
-int analog_input_init(analog_input_t* self)
-{
+	}
+	
 	self->_window = self->window_size 
 			? (int*) calloc(sizeof(int), self->window_size)
 			: NULL;
 	
-	adc1_config_channel_atten(self->channel, ADC_ATTENUATION);
+	adc1_config_channel_atten(self->channel, ADC_DEFAULT_ATTENUATION);
 	self->voltage = -1;
 	self->last_value = -1;
 	self->last_voltage = -1;
@@ -36,20 +36,20 @@ int analog_input_init(analog_input_t* self)
 	return 0;
 }
 
-int analog_input_destroy(analog_input_t* self)
+int adc_destroy(adc_t* self)
 {
 	if (self->_window) free(self->_window);
 	return 0;
 }
 
-int analog_input_update(analog_input_t* self)
+int adc_update(adc_t* self)
 {
 	uint32_t reading = 0;
-	for (int i=0; i<ADC_NUM_SAMPLES; i++) 
+	for (int i=0; i<ADC_DEFAULT_NUM_SAMPLES; i++) 
 	{
 		reading += adc1_get_raw(self->channel);
 	}
-	reading /= ADC_NUM_SAMPLES;
+	reading /= ADC_DEFAULT_NUM_SAMPLES;
 
 	int v = esp_adc_cal_raw_to_voltage(reading, &s_calibration);
 	if (self->_window) 

@@ -1,40 +1,80 @@
 menu "LIMITZ analog servo"
 
+
 	# SERVO 1
-	config LMTZ_SERVO_1
+	config LMTZ_SERVO1
 		bool
 		prompt "Enable servo 1"
 		default n
 	
 	menu "Configuration"
-		depends on LMTZ_SERVO_1
+		depends on LMTZ_SERVO1
 
-		config LMTZ_SERVO_1_PIN
+		config LMTZ_SERVO1_PIN
 			int
 			prompt "GPIO pin"
-			default 36
+			default 17
 	
-		config LMTZ_SERVO_1_MIN_INPUT
+		config LMTZ_SERVO1_MIN_INPUT
 			int 
 			prompt "Minimum input value"
 			default -1000
 
-		config LMTZ_SERVO_1_MAX_INPUT
+		config LMTZ_SERVO1_MAX_INPUT
 			int
 			prompt "Maximum input value"
 			default 1000
 
-		config LMTZ_SERVO_1_CHANNEL
+		config LMTZ_SERVO1_CHANNEL
 			int
 			prompt "LEDC Channel" 
 			default 0
 
-		config LMTZ_SERVO_1_MIN_VALUE
+		config LMTZ_SERVO1_MIN_VALUE
 			int
 			prompt "Min period in us"
 			default 500 
 		
-		config LMTZ_SERVO_1_MAX_VALUE
+		config LMTZ_SERVO1_MAX_VALUE
+			int
+			prompt "Max period in us"
+			default 2500
+	endmenu
+	# SERVO 2
+	config LMTZ_SERVO2
+		bool
+		prompt "Enable servo 2"
+		default n
+	
+	menu "Configuration"
+		depends on LMTZ_SERVO2
+
+		config LMTZ_SERVO2_PIN
+			int
+			prompt "GPIO pin"
+			default 18
+	
+		config LMTZ_SERVO2_MIN_INPUT
+			int 
+			prompt "Minimum input value"
+			default -1000
+
+		config LMTZ_SERVO2_MAX_INPUT
+			int
+			prompt "Maximum input value"
+			default 1000
+
+		config LMTZ_SERVO2_CHANNEL
+			int
+			prompt "LEDC Channel" 
+			default 0
+
+		config LMTZ_SERVO2_MIN_VALUE
+			int
+			prompt "Min period in us"
+			default 500 
+		
+		config LMTZ_SERVO2_MAX_VALUE
 			int
 			prompt "Max period in us"
 			default 2500
