@@ -12,6 +12,7 @@
 
 #define BRIGHTNESS 0x1F
 
+#if (CONFIG_LMTZ_APA102_NUM_LEDS > 0)
 void app_refresh(apa102_t* ledstrip, apa102_color_t* buffer, size_t len, void* context)
 {
 	if (ledstrip->phase & 0xF) return;
@@ -32,6 +33,7 @@ void app_refresh(apa102_t* ledstrip, apa102_color_t* buffer, size_t len, void* c
 
 	}
 }
+#endif
 
 int wifi_connected(wifi_t* wifi, int  e)
 {
@@ -56,20 +58,20 @@ void app_main()
 	adc_t joy_y = ADC2;
 	adc_init(&joy_y);
 #endif
-
+#if (CONFIG_LMTZ_APA102_NUM_LEDS > 0)
 	apa102_t ledstrip = APA102_DEFAULT;
 	apa102_init(&ledstrip);
-
+#endif
 #if CONFIG_LMTZ_ENCODER_1
 	encoder_t enc1 = ENCODER_1_DEFAULT;
 	encoder_init(&enc1);
 #endif
-
+#if (CONFIG_SERVO1 && CONFIG_SERVO2)	
 	servo_t servo1 = SERVO1;
 	servo_t servo2 = SERVO2;
 	servo_init(&servo1);
 	servo_init(&servo2);
-
+#endif
 
 	//ht16k33_t display1 = HT16K33_DEFAULT(0x71);
 	//ht16k33_t display2 = HT16K33_DEFAULT(0x73);
@@ -88,12 +90,12 @@ void app_main()
 		int y = 1900;
 #if CONFIG_LMTZ_ADC1
 		adc_update(&joy_x);
-		x = joy_x.voltage;
+		x = joy_x.result;
 #endif
 
 #if CONFIG_LMTZ_ADC2
 		adc_update(&joy_y);
-		y = joy_y.voltage;
+		y = joy_y.result;
 #endif
 
 #if CONFIG_LMTZ_ENCODER_1
@@ -114,8 +116,10 @@ void app_main()
 		
 		//apa102_update(&ledstrip, app_refresh, NULL);	
 		
-		servo_set(&servo1, (x / 19) - 100);
-		servo_set(&servo2, (y/ 19) - 100);
+		//servo_set(&servo1, (x / 19) - 100);
+		//servo_set(&servo2, (y/ 19) - 100);
+		
+
 		//display1.text = "IT'S";
 		//display2.text = "TIME";
 		//ht16k33_update(&display1);

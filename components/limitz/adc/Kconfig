@@ -6,6 +6,44 @@ menu "LIMITZ ADC"
 		prompt "Enable ADC 1"
 		default n
 	
+		choice LMTZ_ADC1_TYPE_SELECT
+			depends on LMTZ_ADC1
+			prompt "ADC1 type"
+			default LMTZ_ADC1_TYPE_GENERIC
+
+			config LMTZ_ADC1_TYPE_GENERIC
+			bool "Generic Type"
+
+			config LMTZ_ADC1_TYPE_BATTERY
+			bool "Battery monitor"
+
+			config LMTZ_ADC1_TYPE_JOY_X
+			bool "Joystick X asis"
+
+			config LMTZ_ADC1_TYPE_JOY_Y
+			bool "Joystick Y axis"
+		endchoice
+
+		config LMTZ_ADC1_GAIN
+			depends on LMTZ_ADC1
+			prompt "Gain"
+			int
+			default 2
+
+		config LMTZ_ADC1_PIN_EN:
+			depends on LMTZ_ADC1
+			prompt "ADC enabled by other pin?"
+			int
+			help
+				TTGO uses pin 14
+			default 14
+
+		config LMTZ_ADC1_PIN_EN_LEVEL
+			depends on LMTZ_ADC1
+			prompt "Should above pin be high level to enable"
+			bool
+			default y
+	
 
 		choice LMTZ_ADC1_CHANNEL_SELECT
 			depends on LMTZ_ADC1
@@ -60,6 +98,14 @@ menu "LIMITZ ADC"
 		endchoice
 
 
+		config LMTZ_ADC1_TYPE
+			depends on LMTZ_ADC1
+			int
+			default   0 if LMTZ_ADC1_TYPE_GENERIC
+			default 100 if LMTZ_ADC1_TYPE_BATTERY
+			default 121 if LMTZ_ADC1_TYPE_JOY_X
+			default 122 if LMTZ_ADC1_TYPE_JOY_Y
+
 		config LMTZ_ADC1_WINDOW_SIZE
 			depends on LMTZ_ADC1
 			int
@@ -96,7 +142,7 @@ menu "LIMITZ ADC"
 			default 35 if LMTZ_ADC1_CHANNEL7
 			default -1
 
-	# ADC2
+# ADC2
 	config LMTZ_ADC2
 		bool
 		prompt "Enable ADC 2"

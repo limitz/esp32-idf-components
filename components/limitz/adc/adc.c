@@ -1,4 +1,5 @@
 #include <adc.h> 
+#include <lipo.h>
 
 #define TAG "ADC"
 #define ADC_DEFAULT_VREF 	1100
@@ -25,7 +26,18 @@ int adc_init(adc_t* self)
 	self->_window = self->window_size 
 			? (int*) calloc(sizeof(int), self->window_size)
 			: NULL;
-	
+
+	switch (self->type)
+	{
+		case ADC_TYPE_BATTERY:
+			self->translate = lipo_volt_to_percent;
+			break;
+		case ADC_TYPE_JOY_X:
+		case ADC_TYPE_JOY_Y:
+		default:
+			break;
+	}
+
 	adc1_config_channel_atten(self->channel, ADC_DEFAULT_ATTENUATION);
 	self->voltage = -1;
 	self->last_value = -1;
@@ -33,6 +45,14 @@ int adc_init(adc_t* self)
 	self->_window_count = 0;
 	self->_window_sum = 0;
 	self->_window_index = 0;
+
+	if (self->_pin_en >= 0) 
+	{	
+		
+		gpio_reset_pin(self->_pin_en);
+		gpio_set_direction(self->_pin_en, GPIO_MODE_OUTPUT);
+		gpio_set_level(self->_pin_en, CONFIG_LMTZ_ADC1_PIN_EN_LEVEL ? 1 : 0);
+	}
 	return 0;
 }
 
@@ -67,9 +87,9 @@ int adc_update(adc_t* self)
 		self->voltage = self->_window_sum / self->_window_count;
 	}
 	else self->voltage = v;
-
+	
 	self->last_value = reading;
 	self->last_voltage = v;
-
+	self->result = (self->translate ? self->translate(self->voltage*self->_gain) : self->voltage * self->_gain);
 	return 0;
 }
