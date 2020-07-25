@@ -1,5 +1,6 @@
 *.old
-/build
+*.swp
+build
 sdkconfig
 /components/lvgl
 /components/lvgl_esp32_drivers
