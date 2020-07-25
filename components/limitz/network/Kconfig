@@ -1,0 +1,13 @@
+menu "LIMITZ networking"
+	config LMTZ_WIFI_SSID
+		prompt "SSID"
+		string
+		default "LimitzNet"
+
+	config LMTZ_WIFI_PASSWORD
+		prompt "Password"
+		string
+		default "LimitzNet"
+
+endmenu
+
