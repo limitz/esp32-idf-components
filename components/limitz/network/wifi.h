@@ -15,25 +15,13 @@
 //extern const uint8_t ota_pem_start[] asm("_binary_ota_pem_start");
 //extern const uint8_t ota_pem_stop[]  asm("_binary_ota_pem_end");
 
-#ifndef CONFIG_LMTZ_WIFI_SSID
-#define CONFIG_LMTZ_WIFI_SSID ""
-#endif
-
-#ifndef CONFIG_LMTZ_WIFI_PASSWORD
-#define CONFIG_LMTZ_WIFI_PASSWORD ""
-#endif
-
-#ifndef CONFIG_LMTZ_WIFI_RETRIES
-#define CONFIG_LMTZ_WIFI_RETRIES 5
-#endif
-
-#ifndef CONFIG_WIFI_LMTZ_OTA_URL
-#define CONFIG_WIFI_LMTZ_OTA_URL NULL
+#ifndef CONFIG_LMTZ_WIFI_OTA_URL
+#define CONFIG_LMTZ_WIFI_OTA_URL "https://somewhere.over/the/rainbow"
 #endif
 
 // load binary from file, not this
-#ifndef CONFIG_WIFI_LMTZ_OTA_PEM
-#define CONFIG_WIFI_LMTZ_OTA_PEM \
+#ifndef CONFIG_LMTZ_WIFI_OTA_PEM
+#define CONFIG_LMTZ_WIFI_OTA_PEM \
 "-----BEGIN CERTIFICATE-----\n" \
 "MIIDuDCCAqACCQDM+/UYHLxkejANBgkqhkiG9w0BAQsFADCBnDELMAkGA1UEBhMC"\
 "TkwxFTATBgNVBAgMDFp1aWQtSG9sbGFuZDESMBAGA1UEBwwJV2Fzc2VuYWFyMRcw"\
@@ -60,37 +48,27 @@
 
 typedef struct
 {
-	struct {
-    		const char* ssid;
-  		const char* password;
-	} wifi;
+    	const char* ssid;
+  	const char* password;
 
-	struct {
-		uint16_t port;
-	} server;
-	
 	struct {
 		const char* url;
 		const char* pem;
     	} ota;
 } wifi_t;
 
-typedef  int (*wifi_cb) (wifi_t* sender, int error);
-
+#if CONFIG_LMTZ_WIFI
 #define WIFI_DEFAULT \
 { \
-    .ssid = CONFIG_WIFI_SSID, \
-    .password = CONFIG_WIFI_PASSWORD, \
-    .retries = CONFIG_WIFI_RETRIES, \
+    .ssid = CONFIG_LMTZ_WIFI_SSID, \
+    .password = CONFIG_LMTZ_WIFI_PASSWORD, \
     .ota = { \
-	    .url = CONFIG_WIFI_OTA_URL,\
-	    .pem = CONFIG_WIFI_OTA_PEM, \
+	    .url = CONFIG_LMTZ_WIFI_OTA_URL,\
+	    .pem = CONFIG_LMTZ_WIFI_OTA_PEM, \
     }, \
 }
+#endif
 
 int wifi_init(wifi_t* network);
-int wifi_connect(wifi_t* network);
-int wifi_disconnect(wifi_t* network);
-int wifi_listen(wifi_t* network);
 int wifi_ota_update(wifi_t* network);
 int wifi_destroy(wifi_t* network);

@@ -18,9 +18,9 @@ ESP_EVENT_DECLARE_BASE(SERVER_EVENTS);
 
 enum 
 {
-	SERVER_EVENT_SESSION_BEGIN,
-	SERVER_EVENT_SESSION_END,
-	SERVER_EVENT_RECV_PACKET,
+	SERVER_EVENT_SESSION_BEGIN = 0x0A,
+	SERVER_EVENT_SESSION_END   = 0x0B,
+	SERVER_EVENT_RECV_PACKET   = 0x0C,
 };
 
 enum
@@ -34,6 +34,7 @@ enum
 typedef struct _server_t
 {
 	int sock;
+	int client;
 	int port;
 	int state;
 	//RingbufHandle_t rbuffer;
@@ -41,14 +42,15 @@ typedef struct _server_t
 	esp_event_loop_handle_t event_loop;
 } server_t;
 
-
+#if CONFIG_LMTZ_SERVER
 #define SERVER_DEFAULT { \
 	.sock = -1, \
-	.port = 13666, \
+	.port = CONFIG_LMTZ_SERVER_PORT, \
 	.state = SERVER_STATE_UNKNOWN, \
 	.task = NULL, \
 	.event_loop = NULL \
 }
+#endif
 
 void server_task(void* arg);
 

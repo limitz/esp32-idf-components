@@ -7,7 +7,7 @@
 typedef struct 
 {
 	uint8_t size;
-	uint8_t csum;
+	uint8_t hash;
 	uint8_t type;
 	uint8_t index;
 	uint8_t part;

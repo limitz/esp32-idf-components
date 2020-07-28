@@ -14,8 +14,8 @@ ESP_EVENT_DEFINE_BASE(SERVER_EVENTS);
 void server_task(void* arg)
 {
 	server_t* self = (server_t*) arg;
-
-	int error = 0;
+	int opt = 1;
+	int error = 1;
 	uint8_t  rxbuffer[256] = { 0 };
 	uint16_t rxsize = 0;
 	
@@ -32,18 +32,23 @@ void server_task(void* arg)
 		case SERVER_STATE_ERROR:
 			ESP_LOGW("SERVER", "Error %08X", error);
 			self->state = SERVER_STATE_UNKNOWN;
+			vTaskDelay(1000);
 			continue;
 			
 		case SERVER_STATE_IN_SESSION:
 		case SERVER_STATE_UNKNOWN:
 			if (self->sock) close(self->sock);
-			
+
+			ESP_LOGI(__func__, "create socket");
 			self->sock = error = socket(AF_INET, SOCK_STREAM, IPPROTO_IP);
 			if (error  < 0) { self->state = SERVER_STATE_ERROR; continue;}
-			
+			setsockopt(self->sock, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(int));
+
+			ESP_LOGI(__func__, "bind");
 			error = bind(self->sock, (struct sockaddr*)&dest, sizeof(dest));
 			if (error != 0) { self->state = SERVER_STATE_ERROR; continue;}
 				
+			ESP_LOGI(__func__, "listen");
 			error = listen(self->sock, 10);
 			if (error != 0) { self->state = SERVER_STATE_ERROR; continue; }
 
@@ -51,8 +56,12 @@ void server_task(void* arg)
 			continue;
 		
 		case SERVER_STATE_LISTENING:
-			error = accept(self->sock, (struct sockaddr*) &source, &addr_len);
-			if (error != 0) { self->state = SERVER_STATE_ERROR; continue; }
+
+			ESP_LOGI(__func__, "accept");
+			self->client = error = accept(self->sock, (struct sockaddr*) &source, &addr_len);
+			if (error <0) { self->state = SERVER_STATE_ERROR; continue; }
+			
+			ESP_LOGI(__func__, "session");
 			self->state = SERVER_STATE_IN_SESSION;
 
 			while (SERVER_STATE_IN_SESSION == self->state)
@@ -60,14 +69,26 @@ void server_task(void* arg)
 				rxsize = 0, *rxbuffer = sizeof(packet_t);
 				while (rxsize < *rxbuffer)
 				{
-					rxsize += error = recv(self->sock, rxbuffer+rxsize, rxbuffer[0] - rxsize, 0);
-					if (error  < 0) { self->state = SERVER_STATE_ERROR; break; }
-					if (error == 0) { self->state = SERVER_STATE_LISTENING; break; }
+					error = recv(self->client, rxbuffer+rxsize, rxbuffer[0] - rxsize, MSG_WAITALL);
+					if (error < 0)
+					{
+						if (errno == EAGAIN) continue;
+						if (errno == EINTR) continue;
+						self->state = SERVER_STATE_ERROR; 
+						error = errno;	
+						break;
+					}
+					if (error == 0)
+					{
+						self->state = SERVER_STATE_LISTENING; 
+						break; 
+					}
+					rxsize += error;
 				}
 				if (error <= 0) break;
 
-				error = packet_hash((packet_t*)rxbuffer);
-				if (error != 0) { self->state = SERVER_STATE_ERROR; break; }
+				//error = packet_hash((packet_t*)rxbuffer);
+				//if (error != 0) { self->state = SERVER_STATE_ERROR; break; }
 
 				//error = xRingbufferSend(self->rbuffer, rxbuffer, rxsize, pdMS_TO_TICKS(10000));
 				//if (pdTRUE!= error) { self->state = SERVER_STATE_ERROR; break; }
@@ -79,6 +100,13 @@ void server_task(void* arg)
 						SERVER_EVENTS, SERVER_EVENT_RECV_PACKET,
 						rxbuffer, rxsize, 100/portTICK_PERIOD_MS);
 				}
+				else 
+				{
+					esp_event_post(
+						SERVER_EVENTS, SERVER_EVENT_RECV_PACKET,
+						rxbuffer, rxsize, 100/portTICK_PERIOD_MS);
+				}
+
 			}
 			continue;
 		}
@@ -87,15 +115,9 @@ void server_task(void* arg)
 
 int server_init(server_t* self)
 {
-	if (!self->event_loop)
-	{
-		ESP_LOGW(TAG, "No event loop set.");
-		return ESP_FAIL;
-	}
-	
 	if (!self->task)
 	{
-		return xTaskCreate(server_task, "server task", 1024, self, 0, &self->task);
+		return xTaskCreate(server_task, "server task", 2*2*2048, self, 0, &self->task);
 	}
 	else
 	{
@@ -117,5 +139,9 @@ int server_destroy(server_t* self)
 
 int server_send(server_t* self, const void* data, size_t len)
 {
+	packet_t* p;
+	packet_alloc(&p, data, len);
+	p->header.hash = packet_hash(p);
+	send(self->client, p, p->header.size, 0);
 	return ESP_OK;
 }
