@@ -7,11 +7,15 @@
 #include <lwip/sockets.h>
 #include <lwip/netdb.h>
 
-static void server_task(void* arg)
+#define TAG "SERVER"
+
+ESP_EVENT_DEFINE_BASE(SERVER_EVENTS);
+
+void server_task(void* arg)
 {
 	server_t* self = (server_t*) arg;
 
-	int error;
+	int error = 0;
 	uint8_t  rxbuffer[256] = { 0 };
 	uint16_t rxsize = 0;
 	
@@ -65,8 +69,16 @@ static void server_task(void* arg)
 				error = packet_hash((packet_t*)rxbuffer);
 				if (error != 0) { self->state = SERVER_STATE_ERROR; break; }
 
-				error = xRingbufferSend(self->rbuffer, rxbuffer, rxsize, pdMS_TO_TICKS(10000));
-				if (pdTRUE!= error) { self->state = SERVER_STATE_ERROR; break; }
+				//error = xRingbufferSend(self->rbuffer, rxbuffer, rxsize, pdMS_TO_TICKS(10000));
+				//if (pdTRUE!= error) { self->state = SERVER_STATE_ERROR; break; }
+			
+				if (self->event_loop)
+				{
+					esp_event_post_to(
+						self->event_loop,
+						SERVER_EVENTS, SERVER_EVENT_RECV_PACKET,
+						rxbuffer, rxsize, 100/portTICK_PERIOD_MS);
+				}
 			}
 			continue;
 		}
@@ -75,7 +87,21 @@ static void server_task(void* arg)
 
 int server_init(server_t* self)
 {
-	return ESP_OK;
+	if (!self->event_loop)
+	{
+		ESP_LOGW(TAG, "No event loop set.");
+		return ESP_FAIL;
+	}
+	
+	if (!self->task)
+	{
+		return xTaskCreate(server_task, "server task", 1024, self, 0, &self->task);
+	}
+	else
+	{
+		ESP_LOGW(TAG, "Skipping creation of task because server->task != NULL");
+		return ESP_OK;
+	}
 }
 
 

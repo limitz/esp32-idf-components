@@ -8,36 +8,51 @@
 
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
-#include <freertos/event_groups.h>
 #include <freertos/ringbuf.h>
 
-// single client session for now, no threading or select
+#include <esp_event.h>
 
-typedef enum
+// single client session for now, no threading or select
+ESP_EVENT_DECLARE_BASE(SERVER_EVENTS);
+
+
+enum 
+{
+	SERVER_EVENT_SESSION_BEGIN,
+	SERVER_EVENT_SESSION_END,
+	SERVER_EVENT_RECV_PACKET,
+};
+
+enum
 {
 	SERVER_STATE_ERROR = 0xFF,
 	SERVER_STATE_UNKNOWN = 0x00,
 	SERVER_STATE_LISTENING,
 	SERVER_STATE_IN_SESSION
-
-} server_state_t;
-
-struct _server_t;
-typedef int (*server_session_cb)(struct _server_t* server, int client);
-typedef int (*server_receive_cb)(struct _server_t* server, int client, const void* data, size_t len);
+};
 
 typedef struct _server_t
 {
 	int sock;
 	int port;
-	server_state_t state;
-	server_receive_cb on_receive;
-	RingbufHandle_t rbuffer;
-	
+	int state;
+	//RingbufHandle_t rbuffer;
+	TaskHandle_t task;
+	esp_event_loop_handle_t event_loop;
 } server_t;
+
+
+#define SERVER_DEFAULT { \
+	.sock = -1, \
+	.port = 13666, \
+	.state = SERVER_STATE_UNKNOWN, \
+	.task = NULL, \
+	.event_loop = NULL \
+}
+
+void server_task(void* arg);
 
 int server_init(server_t* self);
 int server_close_session(server_t* self);
 int server_destroy(server_t* self);
-
 int server_send(server_t* self, const void* data, size_t len); 
