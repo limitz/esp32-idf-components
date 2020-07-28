@@ -60,13 +60,19 @@
 
 typedef struct
 {
-    int retries;
-    const char* ssid;
-    const char* password;
-    struct {
-	const char* url;
-	const char* pem;
-    } ota;
+	struct {
+    		const char* ssid;
+  		const char* password;
+	} wifi;
+
+	struct {
+		uint16_t port;
+	} server;
+	
+	struct {
+		const char* url;
+		const char* pem;
+    	} ota;
 } wifi_t;
 
 typedef  int (*wifi_cb) (wifi_t* sender, int error);
@@ -82,8 +88,9 @@ typedef  int (*wifi_cb) (wifi_t* sender, int error);
     }, \
 }
 
-int wifi_init(wifi_t* wifi);
-int wifi_connect(wifi_t* wifi);
-int wifi_disconnect(wifi_t* wifi);
-int wifi_ota_update(wifi_t* wifi);
-int wifi_destroy(wifi_t* wifi);
+int wifi_init(wifi_t* network);
+int wifi_connect(wifi_t* network);
+int wifi_disconnect(wifi_t* network);
+int wifi_listen(wifi_t* network);
+int wifi_ota_update(wifi_t* network);
+int wifi_destroy(wifi_t* network);

@@ -49,6 +49,12 @@ typedef struct
 } adc_t;
 
 
+typedef struct 
+{
+	adc_t x;
+	adc_t y;
+} joystick_t;
+
 #ifdef CONFIG_LMTZ_ADC1
 #define ADC1 { \
 	.pin = CONFIG_LMTZ_ADC1_PIN, \
@@ -64,12 +70,23 @@ typedef struct
 #endif
 
 #ifdef CONFIG_LMTZ_ADC2
-#define ADC2 { \
-	.pin = CONFIG_LMTZ_ADC2_PIN, \
-	.channel = CONFIG_LMTZ_ADC2_CHANNEL, \
-	.window_size = CONFIG_LMTZ_ADC2_WINDOW_SIZE, \
-	.min = 0, \
-	.max = 1500, \
+#define JOYSTICK { \
+	.x = {\
+		.pin = CONFIG_LMTZ_ADC2X_PIN, \
+		.channel = CONFIG_LMTZ_ADC2X_CHANNEL, \
+		.window_size = CONFIG_LMTZ_ADC2_WINDOW_SIZE, \
+		._gain = 1, \
+		.min = 0, \
+		.max = 1500, \
+	},\
+	.y = {\
+		.pin = CONFIG_LMTZ_ADC2Y_PIN, \
+		.channel = CONFIG_LMTZ_ADC2Y_CHANNEL, \
+		.window_size = CONFIG_LMTZ_ADC2_WINDOW_SIZE, \
+		._gain=1,\
+		.min = 0, \
+		.max = 1500, \
+	},\
 }
 #endif
 

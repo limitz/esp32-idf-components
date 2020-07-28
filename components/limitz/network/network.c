@@ -12,8 +12,8 @@ int wifi_connect(wifi_t* wifi)
 {
     wifi_config_t config;
     bzero(&config, sizeof(config));
-    memcpy(config.sta.ssid, wifi->ssid, sizeof(config.sta.ssid));
-    memcpy(config.sta.password, wifi->password, sizeof(config.sta.password));
+    memcpy(config.sta.ssid, wifi->wifi.ssid, sizeof(config.sta.ssid));
+    memcpy(config.sta.password, wifi->wifi.password, sizeof(config.sta.password));
 
     ESP_ERROR_CHECK(esp_wifi_disconnect());
     ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &config));
@@ -49,15 +49,12 @@ static void wifi_task(void* arg)
 {
     wifi_t* wifi = (wifi_t*) arg;
 
-    ESP_LOGW("wifi_task", "ssid: %s password: %s", wifi->ssid, wifi->password);
+    ESP_LOGW("wifi_task", "ssid: %s password: %s", wifi->wifi.ssid, wifi->wifi.password);
     EventBits_t bits;
     wifi_config_t wifi_config;
     bzero(&wifi_config, sizeof(wifi_config_t));
-    memcpy(wifi_config.sta.ssid, wifi->ssid, sizeof(wifi_config.sta.ssid));
-    memcpy(wifi_config.sta.password, wifi->password, sizeof(wifi_config.sta.password));
-
-    ESP_LOGI(TAG, "SSID:%s", wifi->ssid);
-    ESP_LOGI(TAG, "PASSWORD:%s", wifi->password);
+    memcpy(wifi_config.sta.ssid, wifi->wifi.ssid, sizeof(wifi_config.sta.ssid));
+    memcpy(wifi_config.sta.password, wifi->wifi.password, sizeof(wifi_config.sta.password));
 
     ESP_ERROR_CHECK( esp_wifi_disconnect() );
     ESP_ERROR_CHECK( esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config) );
@@ -86,7 +83,7 @@ static void wifi_handler(void* arg, esp_event_base_t evt_base, int32_t evt_id, v
 {
     wifi_t* wifi = (wifi_t*) arg;
 
-    ESP_LOGW("wifi_handler", "ssid: %s password: %s", wifi->ssid, wifi->password);
+    ESP_LOGW("wifi_handler", "ssid: %s password: %s", wifi->wifi.ssid, wifi->wifi.password);
 
     #ifndef ESP_EVT_CASE
     #define ESP_EVT_CASE(base, id) if (evt_base == base && evt_id == base ## _ ##  id)
