@@ -17,87 +17,85 @@
 #include "adc.h"
 #include "lipo.h"
 #include "servo.h"
-#include "wifi.h"
-#include "server.h"
-#include "client.h"
 
-#if CONFIG_LMTZ_SERVER
-static server_t server = SERVER_DEFAULT;
-static servo_t sx = SERVO1;
-static servo_t sy = SERVO2;
-
-void server_event_handler(void* arg, esp_event_base_t base, int event_id, void* event_data)
+typedef struct
 {
+	int16_t steering;
+	int16_t throttle;
 
-	switch (event_id)
-	{
-		case SERVER_EVENT_RECV_PACKET:
-		{
-			packet_t* packet = (packet_t*) event_data;
-			int16_t* v = (int16_t*) packet->data;
+} radio_packet_payload_t;
+#define RADIO_PACKET_PAYLOAD_TYPE radio_packet_payload_t
 
-			esp_log_buffer_hex(__func__, packet, packet->header.size);
-			int16_t x = v[0];
-			int16_t y = v[1];
+#include "radio.h"
+static struct
+{
+	joystick_t joystick;
+	servo_t steering, throttle;
+	radio_t radio; radio_packet_t packet;
 
-			servo_set(&sx, x);
-			servo_set(&sy, y);
-		}
-		break;
-	}
+} local = {
+	.steering = SERVO1,
+	.throttle = SERVO2,
+	.joystick = JOYSTICK,
+};
+
+
+
+int handle_accept(const radio_identity_t* identity)
+{
+	ESP_LOGW(__func__, "Accepting %s", identity->name);
+	local.packet.addr = identity->addr;
+	local.packet.flag |= RADIO_PACKET_FLAG_READY;
+	return RADIO_ACCEPT;
 }
-#endif
 
-#if CONFIG_LMTZ_CLIENT
-static client_t client = CLIENT_DEFAULT;
-static joystick_t joystick = JOYSTICK;
-#endif
+int handle_receive(const radio_packet_t* packet)
+{
+	ESP_LOGW(__func__, "[TYPE:%03X FLAGS:%02X SEQ:%04X CRC:%04X] => steering: [ %4d ]  throttle: [ %4d ]", 
+			packet->type, packet->flag, packet->seq, packet->crc, 
+			packet->payload.steering, packet->payload.throttle);
+	servo_set(&local.steering, packet->payload.steering);
+	servo_set(&local.throttle, packet->payload.throttle);
+	return RADIO_OK;
+}
+
 
 void app_main()
 {
 	ESP_ERROR_CHECK( nvs_flash_init() );
-	ESP_LOGW("APP", "unique id = %s", unique_id());
-
-	wifi_t wifi = WIFI_DEFAULT;
-	wifi_init(&wifi);
-
-#if CONFIG_LMTZ_SERVER
-	server_init(&server);
-	servo_init(&sx);
-	servo_init(&sy);
 	
-	esp_event_handler_register(
-			SERVER_EVENTS, ESP_EVENT_ANY_ID,
-			&server_event_handler, NULL);
+	servo_init(&local.steering);
+	servo_init(&local.throttle);
+	
+	adc_init(&local.joystick.x);
+	adc_init(&local.joystick.y);
+	
+	local.radio.callbacks.accept = handle_accept;
+	local.radio.callbacks.receive = handle_receive;
+	
+	radio_init(&local.radio);
 
-	for (;;)
+	for (uint8_t c = 0; ++c; c %= 3)
 	{
-		vTaskDelay(2);
+		adc_update(&local.joystick.x);
+		adc_update(&local.joystick.y);
+
+		if (1 == c)
+		{
+			local.packet.flag |= RADIO_PACKET_FLAG_BROADCAST;
+			local.packet.type = RADIO_PACKET_TYPE_IDENTITY;
+			local.packet.identity = local.radio.identity;
+			radio_send(&local.radio, &local.packet);
+		}
+
+		if (local.packet.flag & RADIO_PACKET_FLAG_READY)
+		{
+			local.packet.flag &= ~RADIO_PACKET_FLAG_BROADCAST;
+			local.packet.type = RADIO_PACKET_TYPE_DATA;
+			local.packet.payload.steering = ((local.joystick.y.result-1880) / 13) * 10;
+			local.packet.payload.throttle = ((local.joystick.x.result-1880) / 13) * 10;
+			radio_send(&local.radio, &local.packet);
+		}
+		vTaskDelay(3);
 	}
-#endif
-
-#if CONFIG_LMTZ_CLIENT
-	client_init(&client);
-	adc_init(&joystick.x);
-	adc_init(&joystick.y);
-
-
-	for (;;)
-	{
-
-		adc_update(&joystick.x);
-		adc_update(&joystick.y);
-
-		int16_t v[2];
-		v[0] = ((joystick.x.result-1880) / 13) * 10;
-		v[1] = ((joystick.y.result-1880) / 13) * 10;
-
-		ESP_LOGI("CLIENT", "X:%d Y:%d", v[0], v[1]);
-
-		if (client.state == CLIENT_STATE_IN_SESSION)
-			client_send(&client, v, 4);
-
-		vTaskDelay(2);
-	}
-#endif
 }

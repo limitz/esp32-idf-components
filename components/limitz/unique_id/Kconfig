@@ -11,6 +11,12 @@ menu "LIMITZ unique id"
 			bool "Create your own unique id"
 	endchoice
 
+	config LMTZ_UNIQUE_ID_PREFIX
+		depends on LMTZ_UNIQUE_ID_SRC_MAC
+		string "Prefix"
+		default "" if LMTZ_UNIQUE_ID_SRC_MANUAL
+		default "LIMITZ-"
+
 	config LMTZ_UNIQUE_ID_MANUAL
 		depends on LMTZ_UNIQUE_ID_SRC_MANUAL
 		prompt "Manually assigned id"

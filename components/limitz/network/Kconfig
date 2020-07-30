@@ -1,4 +1,39 @@
 menu "LIMITZ networking"
+	menuconfig LMTZ_RADIO
+		prompt "Use ESP-NOW"
+		bool
+		default n
+
+		config LMTZ_RADIO_CHANNEL
+		depends on LMTZ_RADIO
+		int "Channel"
+        	default 1
+        	range 1 13
+
+		config LMTZ_RADIO_PACKET_PAYLOAD_SIZE
+		depends on LMTZ_RADIO
+		int "Packet payload size"
+		default 64
+		range 16 240
+
+		config LMTZ_RADIO_LONGRANGE
+		depends on LMTZ_RADIO
+		bool "Enable long range"
+		default y
+		help
+			When enabled, the PHY rate of ESP32 will be 512Kbps or 256Kbps
+
+		config LMTZ_RADIO_PMK
+		depends on LMTZ_RADIO
+		string "Primary master key (must be 16 chars long)"
+		default "LMTZPMK_01234567"
+
+		config LMTZ_RADIO_LMK
+		depends on LMTZ_RADIO
+		string "Local master key (must be 16 chars long)"
+		default "LMTZLMK_01234567"
+
+
 	config LMTZ_WIFI
 		prompt "Connect to WIFI"
 		bool
@@ -17,7 +52,7 @@ menu "LIMITZ networking"
 			default "LimitzNet"
 
 	config LMTZ_SERVER
-		prompt "Start server"
+		prompt "Start server" if !LMTZ_ESPNOW
 		bool
 		default n
 

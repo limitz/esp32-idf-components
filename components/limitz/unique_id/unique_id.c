@@ -1,7 +1,8 @@
 #include "unique_id.h"
-#include "esp_system.h"
+#include <macaddr.h>
+#include <esp_system.h>
 
-static char s_unique[7] = {0};
+static char s_unique[16] = {0};
 
 inline char hex4(uint8_t v)
 {
@@ -14,20 +15,33 @@ inline void hex(char* dst, uint8_t v)
 	dst[1] = hex4(v & 0xF);
 }
 
-const char* unique_id() 
+static int init()
 {
 	if (!*s_unique) 
 	{
-		esp_err_t err = esp_efuse_mac_get_default((uint8_t*)s_unique);
-		if (ESP_OK != err)
-		{
-			return 0;
-		}
-
-		hex(s_unique+0, (uint8_t)s_unique[3]);
-		hex(s_unique+2, (uint8_t)s_unique[4]);
-		hex(s_unique+4, (uint8_t)s_unique[5]);
-		s_unique[6] = 0;
+		macaddr_t ownaddr = macaddr();
+		
+		strcpy(s_unique, CONFIG_LMTZ_UNIQUE_ID_PREFIX);
+		int offset = strlen(s_unique);
+		int max = sizeof(s_unique)-7;
+		if (offset > max) offset = max;
+		
+		memcpy(s_unique + offset, ownaddr.ptr, 6);
+		hex(s_unique+offset+0, (uint8_t)s_unique[3]);
+		hex(s_unique+offset+2, (uint8_t)s_unique[4]);
+		hex(s_unique+offset+4, (uint8_t)s_unique[5]);
+		s_unique[offset+6] = 0;
 	}
+	return ESP_OK;
+}
+
+
+#if (CONFIG_LMTZ_UNIQUE_ID_SRC_MANUAL)
+const char* unique_id() { return CONFIG_LMTZ_UNIQUE_ID_MANUAL; }
+#elif (CONFIG_LMTZ_UNIQUE_ID_SRC_MAC)
+const char* unique_id() 
+{
+	ESP_ERROR_CHECK(init());
 	return s_unique;
 }
+#endif
