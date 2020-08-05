@@ -3,13 +3,13 @@ menu "LIMITZ I2C"
 	config LMTZ_I2CPORT0_EN
 	bool "Enable port 0"
 
-		config LMTZ_I2CPORT0_PIN_SDA
+		config LMTZ_I2CPORT0_SDA
 		depends on LMTZ_I2CPORT0_EN
 		int "SDA Pin number" 
 		range 0 31
 		default 21
 	
-		config LMTZ_I2CPORT0_PIN
+		config LMTZ_I2CPORT0_SCL
 		depends on LMTZ_I2CPORT0_EN
 		int "SCL Pin number"
 		range 0 31
@@ -44,13 +44,13 @@ menu "LIMITZ I2C"
 	config LMTZ_I2CPORT1_EN
 	bool "Enable port 1"
 
-		config LMTZ_I2CPORT1_PIN_SDA
+		config LMTZ_I2CPORT1_SDA
 		depends on LMTZ_I2CPORT1_EN
 		int "SDA Pin number" 
 		range 0 31
 		default 26
 	
-		config LMTZ_I2CPORT1_PIN
+		config LMTZ_I2CPORT1_SCL
 		depends on LMTZ_I2CPORT1_EN
 		int "SCL Pin number"
 		range 0 31

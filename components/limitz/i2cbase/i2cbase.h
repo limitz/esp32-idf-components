@@ -1,3 +1,5 @@
+#pragma once
+
 #include <stdio.h>
 #include <string.h>
 #include "driver/i2c.h"
@@ -8,30 +10,32 @@
 #define ACK_VALUE         0x0                 /*!< I2C ack value */
 #define NACK_VALUE        0x1                /*!< I2C nack value */
 
-#if CONFIG_LMTZ_I2C_PORT0
-#define I2C_PIN_SDA0    CONFIG_LMTZ_I2C_PIN_SDA0
-#define i2C_PIN_SCL0    CONFIG_LMTZ_I2C_PIN_SCL0
+#if CONFIG_LMTZ_I2CPORT0_EN
+#define I2C0_SDA 	CONFIG_LMTZ_I2CPORT0_SDA
+#define I2C0_SCL	CONFIG_LMTZ_I2CPORT0_SCL
+#define I2C0_FREQ 	CONFIG_LMTZ_I2CPORT0_FREQUENCY
 #endif
 
-#if CONFIG_LMTZ_I2C_PORT1
-#define I2C_PIN_SDA1	CONFIG_LMTZ_I2C_PIN_SDA1
-#define I2C_PIN_SCL1	CONFIG_LMTZ_I2C_PIN_SCL1
+#if CONFIG_LMTZ_I2CPORT1_EN
+#define I2C1_SDA	CONFIG_LMTZ_I2CPORT1_SDA
+#define I2C1_SCL	CONFIG_LMTZ_I2CPORT1_SCL
+#define I2C1_FREQ  	CONFIG_LMTZ_I2CPORT1_FREQUENCY
 #endif
 
 
-#define I2C_PORTBASE_FREQ   100000
 #define I2CBASE_NUM_PORTS 2
 
 
-enum
+typedef enum
 {
-	S_INIT = 1
+	S_INIT = 1,
 	I2CSTATE_INITIALIZED = 1,
-} i2cstate_t
 
-enum 
+} i2cstate_t;
+
+typedef enum 
 {
-	F_PUE =  1
+	F_PUE =  1,
 	I2CFLAG_PULLUP_ENABLED = 1,
 
 } i2cflags_t;
@@ -54,8 +58,8 @@ typedef struct
 	};
 	
 	uint8_t data[0];
-} i2cmessage_t, i2cmsg_t;
-
+} i2cmessage_t;
+typedef i2cmessage_t i2cmsg_t;
 
 typedef struct
 {
@@ -82,9 +86,9 @@ typedef struct
 			uint8_t SCL;
 			uint8_t scl;
 		};
-	} pin;
+	} pins;
 
-} i2cport_t
+} i2cport_t;
 
 
 typedef struct
@@ -94,7 +98,7 @@ typedef struct
 	i2cport_t ports[I2CBASE_NUM_PORTS];
 	int (*init)();
 	int (*deinit)();
-	int (*send)(const i2cmessage_t message);
+	int (*write)(const i2cmessage_t* message);
 } i2cbase_t;
 
 extern i2cbase_t I2C;

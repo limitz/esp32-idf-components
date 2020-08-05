@@ -1,33 +1,36 @@
 #include "i2cbase.h"
 #include "driver/i2c.h"
 
-int i2cbase_init()
-int i2cbase_deinit()
-int i2cbase_send(const i2cmsg_t* msg);
+int i2cbase_init();
+int i2cbase_deinit();
+int i2cbase_write(const i2cmsg_t* msg);
 
 i2cbase_t I2C = 
 {
-	.state = 0;
-	.flags = 0;
-	.num_ports = I2CBASE_NUM_PORTS,
+	.state = 0,
+	.flags = 0,
 	.ports =
 	{
+#if CONFIG_LMTZ_I2CPORT0_EN
 		{	
 			.port = 0,
-			.freq = I2CBASE_FREQUENCY,
-			.pins = { .SDA = 21, .SCL = 22, },
+			.freq = I2C0_FREQ,
+			.pins = { .SDA = I2C0_SDA, .SCL = I2C0_SCL },
 		},
+#endif
+#if CONFIG_LMTZ_I2CPORT0_EN
+
 		{
 			.port = 1,
-			.freq = i2CBASE_FREQUENCY,
-			.pins = { ,SDA = 26, SCL = 27 },
+			.freq = I2C1_FREQ,
+			.pins = { .SDA = I2C1_SDA, .SCL = I2C1_SCL },
 		},
 	},
-
-	,init = i2cbase_init,
+#endif
+	.init = i2cbase_init,
 	.deinit = i2cbase_deinit,
-	.send = i2cbase_send,
-}
+	.write = i2cbase_write,
+};
 
 int i2cbase_init()
 {
@@ -44,16 +47,16 @@ int i2cbase_init()
 			.mode = I2C_MODE_MASTER,
 			.sda_io_num = port->pins.SDA,
 			.scl_io_num = port->pins.SCL,
-			.sda_pullup_en = port->flags & F_PUE;
-			.scl_pullup_en = port->flags & F_PUE;
-			.master.clock_speed = port->freq;
+			.sda_pullup_en = port->flags & F_PUE,
+			.scl_pullup_en = port->flags & F_PUE,
+			.master.clk_speed = port->freq,
 		};
 
 		err = i2c_param_config(port->port,&config);
 		if (ESP_OK != err) return err;
 
-		err = i2c_param_install(port->port, I2C_MODE_MASTER, 0, 0, 0);
-		if (ESP_OK != err, return err;
+		err = i2c_driver_install(port->port, I2C_MODE_MASTER, 0, 0, 0);
+		if (ESP_OK != err) return err;
 	};
 	I2C.state |= S_INIT;
 	return ESP_OK;
@@ -64,10 +67,11 @@ int i2cbase_deinit()
 	int err, res = ESP_OK;
 	for (int i=0; i<I2CBASE_NUM_PORTS; i++)
 	{
-		err = i2c_driver_delete();
+		i2cport_t* port = &I2C.ports[i];
+		err = i2c_driver_delete(port->port);
 		if (!res) res = err;
 	}
-	I2C_state &= ~S_INIT;
+	I2C.state &= ~S_INIT;
 	return res;
 }
 
@@ -84,31 +88,31 @@ int i2cbase_write(const i2cmsg_t* msg)
 	err = i2c_master_start(cmd);
 	if (ESP_OK != err) 
 	{ 
-		i2c_link_delete(cmd); 
+		i2c_cmd_link_delete(cmd); 
 		return err; 
 	}
 	err = i2c_master_write_byte(cmd, (msg->addr << 1) | I2C_MASTER_WRITE, ACK_CHECK_ENABLE);
 	if (ESP_OK != err) 
 	{ 
 		i2c_master_stop(cmd); 
-		i2c_link_delete(cmd); 
+		i2c_cmd_link_delete(cmd); 
 		return err; 
 	}
 	int i;
-	for (i=0,i<msg->len; i++)
+	for (i=0; i<msg->len; i++)
 	{
  		err = i2c_master_write_byte(cmd, msg->data[i], ACK_CHECK_ENABLE);
 		if (ESP_OK != err) 
 		{
 			i2c_master_stop(cmd);
-			i2c_link_delete(cmd); 
+			i2c_cmd_link_delete(cmd); 
 			return err; 
 		}
 	}
 	err = i2c_master_stop(cmd);
 	if (ESP_OK != err) 
 	{ 
-		i2c_link_delete(cmd); 
+		i2c_cmd_link_delete(cmd); 
 		return err; 
 	}
 
