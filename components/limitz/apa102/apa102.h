@@ -16,15 +16,16 @@ typedef uint32_t apa102_color_t;
 
 #if (CONFIG_LMTZ_APA102_SPI_HSPI)
 #define CONFIG_LMTZ_APA102_SPI_HOST HSPI_HOST
-#elif (CONIG_LMTZ_PA102_SPI_VSPI)
+#elif (CONFIG_LMTZ_APA102_SPI_VSPI)
 #define CONFIG_LMTZ_APA102_SPI_HOST VSPI_HOST
 #endif
 
 #define CONFIG_LMTZ_APA102_MAX_TRANSFER (8*((2+CONFIG_LMTZ_APA102_NUM_LEDS)*sizeof(apa102_color_t)))
 
-#define APA102_DEFAULT { \
+#define APA102 { \
 	.phase = 0, \
 	.device = 0, \
+	.count = CONFIG_LMTZ_APA102_NUM_LEDS, \
 	.spi_host = CONFIG_LMTZ_APA102_SPI_HOST, \
 	.dma_channel = CONFIG_LMTZ_APA102_DMA_CHANNEL, \
 	.transaction = { \
@@ -48,13 +49,17 @@ typedef uint32_t apa102_color_t;
 
 typedef struct
 {
-	apa102_color_t* txbuffer;
-	//[CONFIG_LMTZ_APA102_MAX_TRANSFER/sizeof(apa102_color_t)];
+	union 
+	{
+		apa102_color_t* txbuffer;
+		apa102_color_t* leds;
+	};
+		//[CONFIG_LMTZ_APA102_MAX_TRANSFER/sizeof(apa102_color_t)];
 	
 	uint16_t phase;
 	int spi_host;
 	int dma_channel;
-
+	int count;
 	spi_bus_config_t bus_config;
 	spi_device_interface_config_t dev_config;
 	spi_transaction_t transaction;
@@ -64,5 +69,5 @@ typedef struct
 typedef void (*apa102_refresh_cb)(apa102_t* sender, apa102_color_t* color, size_t len, void* context);
 
 esp_err_t apa102_init(apa102_t* self);
-esp_err_t apa102_update(apa102_t* self, apa102_refresh_cb cb, void* context);
+esp_err_t apa102_update(apa102_t* self); //, apa102_refresh_cb cb, void* context);
 esp_err_t apa102_destroy(apa102_t* self);

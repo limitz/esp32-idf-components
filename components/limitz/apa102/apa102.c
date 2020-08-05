@@ -33,18 +33,18 @@ esp_err_t apa102_init(apa102_t* self)
 	return ESP_OK;
 }
 
-esp_err_t apa102_update(apa102_t* self, apa102_refresh_cb cb, void* context)
+esp_err_t apa102_update(apa102_t* self) //, apa102_refresh_cb cb, void* context)
 {
 	if (!self->transaction.tx_buffer)
 	{
 		self->transaction.tx_buffer = self->txbuffer;
-		cb(self, self->txbuffer+1, CONFIG_LMTZ_APA102_NUM_LEDS, context);
+		//cb(self, self->txbuffer+1, CONFIG_LMTZ_APA102_NUM_LEDS, context);
 	}
 
 	spi_device_queue_trans(self->device, &self->transaction, portMAX_DELAY);
 
 	self->phase += 1;
-	cb(self, self->txbuffer+1, CONFIG_LMTZ_APA102_NUM_LEDS, context);
+	//cb(self, self->txbuffer+1, CONFIG_LMTZ_APA102_NUM_LEDS, context);
 
 	spi_transaction_t* t;
 	spi_device_get_trans_result(self->device, &t, portMAX_DELAY);

@@ -17,6 +17,7 @@
 #include "adc.h"
 #include "lipo.h"
 #include "servo.h"
+#include "apa102.h"
 
 typedef struct
 {
@@ -32,14 +33,13 @@ static struct
 	joystick_t joystick;
 	servo_t steering, throttle;
 	radio_t radio; radio_packet_t packet;
-
+	apa102_t ledstrip;
 } local = {
 	.steering = SERVO1,
 	.throttle = SERVO2,
 	.joystick = JOYSTICK,
+	.ledstrip = APA102
 };
-
-
 
 int handle_accept(const radio_identity_t* identity)
 {
@@ -59,6 +59,26 @@ int handle_receive(const radio_packet_t* packet)
 	return RADIO_OK;
 }
 
+enum 
+{
+	HEADLIGHT_L_ = 0x0000000F,
+	HEADLIGHT_R  = 0x000000F0,
+	HEADLIGHTS   = 0x000000FF,
+	INDICATOR_L1 = 0x00800100,
+	INDICATOR_L2 = 0x00400200,
+	INDICATOR_L3 = 0x00200400,
+	INDICATOR_L4 = 0x00100800,
+	INDICATOR_R1 = 0x00081000,
+	INDICATOR_R2 = 0x00042000,
+	INDICATOR_R3 = 0x00024000,
+	INDICATOR_R4 = 0x00018000,
+	INDICATOR_L  = 0x00F00F00,//INDICATOR_L1 | INDICATOR_L2 | INDICATOR_L3 | INDICATOR_L4,
+	INDICATOR_R  = 0x000FF000,//INDICATOR_R1 | INDICATOR_R2 | INDICATOR_R3 | INDICATOR_R4,
+	INDICATORS   = 0x00FFFF00,//INDICATOR_L  | INDICATOR_R,
+	BRAKE_L      = 0x0F000000,
+	BRAKE_R      = 0xF0000000,
+	BRAKES       = 0xFF000000,
+};
 
 void app_main()
 {
@@ -69,19 +89,92 @@ void app_main()
 	
 	adc_init(&local.joystick.x);
 	adc_init(&local.joystick.y);
-	
+
+	apa102_init(&local.ledstrip);
+
 	local.radio.callbacks.accept = handle_accept;
 	local.radio.callbacks.receive = handle_receive;
 	
 	radio_init(&local.radio);
+
+	int indicator_toggle = 0;
+	int flash_toggle = 0;
 
 	for (uint8_t c = 0; ++c; c %= 3)
 	{
 		adc_update(&local.joystick.x);
 		adc_update(&local.joystick.y);
 
+		int steering = local.steering.input;
+		int throttle = local.throttle.input;//';((local.joystick.x.result-1880) / 13) * 10;
+
 		if (1 == c)
 		{
+			if (++flash_toggle >= 3) flash_toggle = 0;
+			for (uint8_t i=0; i<local.ledstrip.count; i++)
+			{
+				uint32_t sect = 1<<i;
+				apa102_color_t* led = local.ledstrip.leds + i;
+				if (sect & BRAKES) 
+				{
+					if (throttle < -500 && (sect & 0x7E000000) && (flash_toggle < 2)) *led = APA102_COLOR(0x00, 0x00, 0x00, 0x00);
+					else if (throttle < 0) *led = APA102_COLOR(0xFF, 0x00, 0x00, 0xFF);
+					else *led = APA102_COLOR(0xFF, 0x00, 0x00, 0x0F);
+				}
+
+				if (sect & HEADLIGHTS)
+				{
+					if (throttle > 200)
+					*led = APA102_COLOR(0xFF, 0xFF, 0xFF, 0xFF);
+					else {
+					*led = APA102_COLOR(0xFF, 0xFF, 0xFF, 0x44);
+					}
+
+				}
+
+				if (sect & INDICATORS)
+				{
+					if (steering > 150)
+					{
+						if (indicator_toggle < 0) indicator_toggle = 0;
+	
+						if ((indicator_toggle > 2 && (sect & INDICATOR_R1)) 
+						||  (indicator_toggle > 3 && (sect & INDICATOR_R2))
+						||  (indicator_toggle > 4 && (sect & INDICATOR_R3)) 
+						||  (indicator_toggle > 5 && (sect & INDICATOR_R4)))
+				 		{
+							*led = APA102_COLOR(0xFF, 0x33, 0x00, 0xFF);
+						}
+						else 
+						{
+							*led = APA102_COLOR(0x00, 0x00, 0x00, 0x00); 
+						}
+					}
+					else if (steering < -150)
+					{
+						if (indicator_toggle > 0) indicator_toggle = 0;
+						if ((indicator_toggle < -2 && (sect & INDICATOR_L1)) 
+						||  (indicator_toggle < -3 && (sect & INDICATOR_L2)) 
+						||  (indicator_toggle < -4 && (sect & INDICATOR_L3)) 
+						||  (indicator_toggle < -5 && (sect & INDICATOR_L4)))
+				 		{
+							*led = APA102_COLOR(0xFF, 0x33, 0x00, 0xFF);
+						}
+						else 
+						{
+							*led = APA102_COLOR(0x00, 0x00, 0x00, 0x00); 
+						}
+					}
+					else 
+					{
+						*led = APA102_COLOR(0x00, 0x00, 0x00, 0x00);
+					}
+				}
+			}
+			if (steering > 50 && ++indicator_toggle >= 8) indicator_toggle = 0;
+			if (steering < 50 && --indicator_toggle <= -8) indicator_toggle = 0;
+
+			apa102_update(&local.ledstrip);
 			local.packet.flag |= RADIO_PACKET_FLAG_BROADCAST;
 			local.packet.type = RADIO_PACKET_TYPE_IDENTITY;
 			local.packet.identity = local.radio.identity;
@@ -90,12 +183,15 @@ void app_main()
 
 		if (local.packet.flag & RADIO_PACKET_FLAG_READY)
 		{
+			int send_steering = ((local.joystick.y.result-1880) / 13) * 10;
+			int send_throttle = ((local.joystick.x.result-1880) / 13) * 10;
+
 			local.packet.flag &= ~RADIO_PACKET_FLAG_BROADCAST;
 			local.packet.type = RADIO_PACKET_TYPE_DATA;
-			local.packet.payload.steering = ((local.joystick.y.result-1880) / 13) * 10;
-			local.packet.payload.throttle = ((local.joystick.x.result-1880) / 13) * 10;
+			local.packet.payload.steering = send_steering;
+			local.packet.payload.throttle = send_throttle;
 			radio_send(&local.radio, &local.packet);
 		}
-		vTaskDelay(3);
+		vTaskDelay(2);
 	}
 }

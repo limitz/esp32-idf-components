@@ -1,0 +1,86 @@
+menu "LIMITZ I2C"
+
+	config LMTZ_I2CPORT0_EN
+	bool "Enable port 0"
+
+		config LMTZ_I2CPORT0_PIN_SDA
+		depends on LMTZ_I2CPORT0_EN
+		int "SDA Pin number" 
+		range 0 31
+		default 21
+	
+		config LMTZ_I2CPORT0_PIN
+		depends on LMTZ_I2CPORT0_EN
+		int "SCL Pin number"
+		range 0 31
+		default 22
+	
+		choice LMTZ_I2CPORT0_FREQ_SELECT	
+		depends on LMTZ_I2CPORT0_EN
+		prompt "Frequency"
+			config  LMTZ_I2CPORT0_FREQ_1
+			bool "1 Mhz"
+
+			config  LMTZ_I2CPORT0_FREQ_5
+			bool "5 Mhz"
+
+			config  LMTZ_I2CPORT0_FREQ_10
+			bool "10 Mhz"
+
+			config  LMTZ_I2CPORT0_FREQ_20
+			bool "20 Mhz"
+
+		endchoice
+
+		config LMTZ_I2CPORT0_FREQUENCY
+		depends on LMTZ_I2CPORT0_EN
+		int
+		default 1000000  if LMTZ_I2CPORT0_FREQ_1
+		default 5000000  if LMTZ_I2CPORT0_FREQ_5
+		default 10000000 if LMTZ_I2CPORT0_FREQ_10
+		default 20000000 if LMTZ_I2CPORT0_FREQ_20
+
+
+	config LMTZ_I2CPORT1_EN
+	bool "Enable port 1"
+
+		config LMTZ_I2CPORT1_PIN_SDA
+		depends on LMTZ_I2CPORT1_EN
+		int "SDA Pin number" 
+		range 0 31
+		default 26
+	
+		config LMTZ_I2CPORT1_PIN
+		depends on LMTZ_I2CPORT1_EN
+		int "SCL Pin number"
+		range 0 31
+		default 27
+	
+		choice LMTZ_I2CPORT1_FREQ_SELECT	
+		depends on LMTZ_I2CPORT1_EN
+		prompt "Frequency"
+			config  LMTZ_I2CPORT1_FREQ_1
+			bool "1 Mhz"
+
+			config  LMTZ_I2CPORT1_FREQ_5
+			bool "5 Mhz"
+
+			config  LMTZ_I2CPORT1_FREQ_10
+			bool "10 Mhz"
+
+			config  LMTZ_I2CPORT1_FREQ_20
+			bool "20 Mhz"
+
+		endchoice
+
+		config LMTZ_I2CPORT1_FREQUENCY
+		depends on LMTZ_I2CPORT1_EN
+		int
+		default 1000000  if LMTZ_I2CPORT1_FREQ_1
+		default 5000000  if LMTZ_I2CPORT1_FREQ_5
+		default 10000000 if LMTZ_I2CPORT1_FREQ_10
+		default 20000000 if LMTZ_I2CPORT1_FREQ_20
+
+
+
+endmenu

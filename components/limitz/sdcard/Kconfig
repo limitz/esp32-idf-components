@@ -1,0 +1,39 @@
+menu "LIMITZ SD Card"
+
+	# ENCODER 1
+	config LMTZ_SDCARD
+		bool
+		prompt "Enable SD Card"
+		default n
+	
+	choice LMTZ_SDCARD_SLOT
+		depends on LMTZ_SDCARD
+		default LMTZ_SDCARD_SLOT_1
+		prompt "SDMMC Slot"
+
+		config LMTZ_SDCARD_SLOT_0
+		bool "Slot 0"
+		help
+			CMD, CLK, D0-7 = GGPIOs 11,6,7,8,9,10,16,17,5,18
+
+		config LMTZ_SDCARD_SLOT_1
+		bool  "Slot 1"
+		help
+			CMD, CLK, D0-3 = GPIOs 15,14,2,4,12,13
+	endchoice
+
+	config LMTZ_SDCARD_CD_PIN
+		int "CD Pin"
+		range -1-31
+		default -1
+	
+	config LMTZ_SDCARD_WP_PIN
+		int "WP Pin"
+		range -1-31
+		default -1
+
+	choice LMTZ_SDCARD_SPEED_MODE
+		depends on LMTZ_SDCARD
+		prompt "
+	endchoice
+endmenu

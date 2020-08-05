@@ -47,6 +47,8 @@ int servo_set(servo_t* self, int v)
 	if (v < self->minInput) v = self->minInput;
 	else if (v > self->maxInput) v = self->maxInput;
 
+	self->input = v;
+
 	double us = ((v - self->minInput) / (double)(self->maxInput - self->minInput))
 		  * (self->_maxValue_us - self->_minValue_us) + self->_minValue_us;
 

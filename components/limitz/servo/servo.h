@@ -11,6 +11,7 @@ typedef struct
 	int maxInput;
 	int duty;
 	int pin;
+	int input;
 } servo_t;
 
 #if (CONFIG_LMTZ_SERVO1)
