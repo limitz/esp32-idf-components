@@ -5,11 +5,6 @@
 #include "driver/i2c.h"
 #include "esp_log.h"
 
-#define ACK_CHECK_ENABLE  0x1            /*!< I2C master will check ack from slave*/
-#define ACK_CHECK_DISABLE 0x0           /*!< I2C master will not check ack from slave *//
-#define ACK_VALUE         0x0                 /*!< I2C ack value */
-#define NACK_VALUE        0x1                /*!< I2C nack value */
-
 #if CONFIG_LMTZ_I2CPORT0_EN
 #define I2C0_SDA 	CONFIG_LMTZ_I2CPORT0_SDA
 #define I2C0_SCL	CONFIG_LMTZ_I2CPORT0_SCL
@@ -40,6 +35,29 @@ typedef enum
 
 } i2cflags_t;
 
+
+typedef union
+{
+	uint8_t write;
+	uint8_t read;
+	uint8_t len;
+	uint8_t length;
+	uint8_t size;
+} i2cmode_t;
+
+typedef struct { uint8_t addr; i2cmode_t mode; uint8_t value[0]; } 
+i2cregister_t, i2creg_t;
+
+typedef struct { uint8_t addr; i2cmode_t mode; uint8_t value; } 
+i2cregister_uint8_t, i2creg_u8_t;
+
+typedef struct { uint8_t addr; i2cmode_t mode; uint16_t value; } 
+i2cregister_uint16_t, i2creg_u16_t;
+
+typedef struct { uint8_t addr; i2cmode_t mode; uint32_t value; }
+i2cregister_uint32_t, i2creg_u32_t;
+
+
 typedef struct
 {
 	uint8_t port;
@@ -60,6 +78,19 @@ typedef struct
 	uint8_t data[0];
 } i2cmessage_t;
 typedef i2cmessage_t i2cmsg_t;
+
+
+typedef struct
+{
+	uint8_t port;
+
+	union {
+		uint8_t address;
+		uint8_t addr;
+	};
+
+	int (*write)(const void* buffer, int len);
+} i2cendpoint_t;
 
 typedef struct
 {
@@ -98,7 +129,9 @@ typedef struct
 	i2cport_t ports[I2CBASE_NUM_PORTS];
 	int (*init)();
 	int (*deinit)();
-	int (*write)(const i2cmessage_t* message);
+	int (*read) (i2cendpoint_t* src, i2creg_t* reg);
+	int (*write)(const i2cendpoint_t* dst, const i2creg_t* reg);
+	int (*write_message)(const i2cmessage_t* message);
 } i2cbase_t;
 
 extern i2cbase_t I2C;

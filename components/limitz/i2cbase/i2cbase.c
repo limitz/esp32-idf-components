@@ -3,7 +3,8 @@
 
 int i2cbase_init();
 int i2cbase_deinit();
-int i2cbase_write(const i2cmsg_t* msg);
+int i2cbase_write_message(const i2cmsg_t* msg);
+int i2cbase_write(const i2cendpoint_t* endpoint, const i2creg_t* reg);
 
 i2cbase_t I2C = 
 {
@@ -29,6 +30,7 @@ i2cbase_t I2C =
 #endif
 	.init = i2cbase_init,
 	.deinit = i2cbase_deinit,
+	.write_message = i2cbase_write_message,
 	.write = i2cbase_write,
 };
 
@@ -75,7 +77,20 @@ int i2cbase_deinit()
 	return res;
 }
 
-int i2cbase_write(const i2cmsg_t* msg)
+int i2cbase_write(const i2cendpoint_t* endpoint, const i2creg_t* reg)
+{
+	// TODO check if mode contains write bit
+	i2cmsg_t msg = {
+		.port = endpoint->port | 0x80,
+		.addr = endpoint->addr,
+		.len = reg->mode.size & 0xF,
+	};
+	memcpy(msg.data, reg->value, msg.len);
+	
+	return i2cbase_write_message(&msg);
+}
+
+int i2cbase_write_message(const i2cmsg_t* msg)
 {
 
 	int err;
@@ -91,7 +106,7 @@ int i2cbase_write(const i2cmsg_t* msg)
 		i2c_cmd_link_delete(cmd); 
 		return err; 
 	}
-	err = i2c_master_write_byte(cmd, (msg->addr << 1) | I2C_MASTER_WRITE, ACK_CHECK_ENABLE);
+	err = i2c_master_write_byte(cmd, (msg->addr << 1) | I2C_MASTER_WRITE, 0x01);
 	if (ESP_OK != err) 
 	{ 
 		i2c_master_stop(cmd); 
@@ -101,7 +116,7 @@ int i2cbase_write(const i2cmsg_t* msg)
 	int i;
 	for (i=0; i<msg->len; i++)
 	{
- 		err = i2c_master_write_byte(cmd, msg->data[i], ACK_CHECK_ENABLE);
+ 		err = i2c_master_write_byte(cmd, msg->data[i], 0x01);
 		if (ESP_OK != err) 
 		{
 			i2c_master_stop(cmd);

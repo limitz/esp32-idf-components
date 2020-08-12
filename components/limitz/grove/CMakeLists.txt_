@@ -1,0 +1,6 @@
+idf_component_register(SRCS "trackball.c"
+			INCLUDE_DIRS .
+			REQUIRES "i2cbase"
+			)
+
+

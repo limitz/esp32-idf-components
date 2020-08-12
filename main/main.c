@@ -18,6 +18,8 @@
 #include "lipo.h"
 #include "servo.h"
 #include "apa102.h"
+#include "i2cbase.h"
+
 
 typedef struct
 {

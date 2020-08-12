@@ -1,0 +1,16 @@
+menu "LIMITZ Peripherals"
+
+	menuconfig LMTZ_TRACKBALL_EN
+	bool "Enable Grove Trackball"
+	default 0
+
+		config LMTZ_TRACKBALL_PORT
+		depends on LMTZ_TRACKBALL_EN
+		int "Trackball I2C Port"
+		range 0 1
+
+		config LMTZ_TRACKBALL_ADDR
+		depends on LMTZ_TRACKBALL_EN
+		int "Trackball I2C Addr"
+
+endmenu
