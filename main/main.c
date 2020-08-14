@@ -19,7 +19,7 @@
 #include "servo.h"
 #include "apa102.h"
 #include "i2cbase.h"
-
+#include "gui.h"
 
 typedef struct
 {
@@ -92,7 +92,8 @@ void app_main()
 	adc_init(&local.joystick.x);
 	adc_init(&local.joystick.y);
 
-	apa102_init(&local.ledstrip);
+	//apa102_init(&local.ledstrip);
+	local.ledstrip.count = 0;
 
 	local.radio.callbacks.accept = handle_accept;
 	local.radio.callbacks.receive = handle_receive;
@@ -101,6 +102,8 @@ void app_main()
 
 	int indicator_toggle = 0;
 	int flash_toggle = 0;
+
+	gui_init();
 
 	for (uint8_t c = 0; ++c; c %= 3)
 	{
@@ -115,6 +118,7 @@ void app_main()
 			if (++flash_toggle >= 3) flash_toggle = 0;
 			for (uint8_t i=0; i<local.ledstrip.count; i++)
 			{
+				
 				uint32_t sect = 1<<i;
 				apa102_color_t* led = local.ledstrip.leds + i;
 				if (sect & BRAKES) 
@@ -176,7 +180,7 @@ void app_main()
 			if (steering > 50 && ++indicator_toggle >= 8) indicator_toggle = 0;
 			if (steering < 50 && --indicator_toggle <= -8) indicator_toggle = 0;
 
-			apa102_update(&local.ledstrip);
+			//apa102_update(&local.ledstrip);
 			local.packet.flag |= RADIO_PACKET_FLAG_BROADCAST;
 			local.packet.type = RADIO_PACKET_TYPE_IDENTITY;
 			local.packet.identity = local.radio.identity;

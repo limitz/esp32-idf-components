@@ -1,0 +1,86 @@
+menu "LIMITZ Display"
+
+	config LMTZ_BACKLIGHT_PIN
+	int "Backlight GPIO Pin (#)"
+	default 4
+
+	menuconfig LMTZ_BACKLIGHT_PWM_EN
+	bool "Enable PWM"
+
+		config LMTZ_BACKLIGHT_TIMER
+		int "LEDC Timer (#)"
+		depends on LMTZ_BACKLIGHT_PWM_EN
+		range 0 7
+		default 0
+
+		config LMTZ_BACKLIGHT_CHANNEL
+		depends on LMTZ_BACKLIGHT_PWM_EN
+		int "LEDC Channel (#)"
+		range 0 7
+		default 1
+	
+		config LMTZ_BACKLIGHT_PWM_FREQ
+		depends on LMTZ_BACKLIGHT_PWM_EN
+		int "PWM Frequency (Hz)"
+		default 300
+
+		config LMTZ_BACKLIGHT_PWM_BITS
+		depends on LMTZ_BACKLIGHT_PWM_EN
+		int "PWM Resolution (bits)"
+		default 12
+
+		config LMTZ_BACKLIGHT_SCALE_ON
+		depends on LMTZ_BACKLIGHT_PWM_EN
+		int "LEDC Fade cycles to ON"
+		default 10
+
+		config LMTZ_BACKLIGHT_SCALE_DIM
+		depends on LMTZ_BACKLIGHT_PWM_EN
+		int "LEDC Fade cycles to DIMMED"
+		default 1
+
+		config LMTZ_BACKLIGHT_SCALE_OFF
+		depends on LMTZ_BACKLIGHT_PWM_EN
+		int "LEDC Fade cycles to OFF"
+		default 20
+
+		config LMTZ_BACKLIGHT_CYCLES
+		depends on LMTZ_BACKLIGHT_PWM_EN
+		int "LEDC ticks per cycle"
+		default 1
+
+		
+		config LMTZ_BACKLIGHT_LEVEL_ON
+		depends on LMTZ_BACKLIGHT_PWM_EN
+		int "Duty cycle ON (%)"
+		default 100
+		range 0 100
+
+		config LMTZ_BACKLIGHT_LEVEL_DIM
+		depends on LMTZ_BACKLIGHT_PWM_EN
+		int "Duty cycle DIMMED (%)"
+		default 50
+		range 0 100
+		
+		config LMTZ_BACKLIGHT_LEVEL_OFF
+		depends on LMTZ_BACKLIGHT_PWM_EN
+		int "Duty cycle OFF (%)"
+		default 0
+		range 0 100
+
+		config LMTZ_BACKLIGHT_DIMS_AFTER_SEC
+		depends on LMTZ_BACKLIGHT_PWM_EN
+		int "Automatically dim after (sec)"
+		default 30
+		help
+			Use 0 to never dim
+
+		config LMTZ_BACKLIGHT_OFF_AFTER_SEC
+		depends on LMTZ_BACKLIGHT_PWM_EN
+		int "Automatically turn off after (sec)"
+		default 180
+		help
+			Use 0 to never turn off
+
+
+endmenu

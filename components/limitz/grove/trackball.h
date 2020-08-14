@@ -6,11 +6,6 @@
 #define TRACKBALL_VALID_MAGIC 0x3a6fb67c
 
 // TODO put somewhere else, like general math lib
-typedef struct
-{
-	int x, y;
-} point_t;
-
 enum
 {
 	LED_F1,      LED_MODE_FLASH_1 = 0x00, 
@@ -40,10 +35,10 @@ enum
 
 	R_ADDR,		TRACKBALL_REG_ADDR 		= 0x09,
 	R_SPEED,	TRACKBALL_REG_SPEED 		= 0x0A,
-	R_SPEED,	TRACKBALL_REG_SPEED_HB 		= 0x0B,
+			TRACKBALL_REG_SPEED_HB 		= 0x0B,
 	R_LED,		TRACKBALL_REG_LEDMODE 		= 0x0C,
 	R_TFLASH,	TRACKBALL_REG_TIME_FLASH 	= 0x0D,
-	R_TFLASH,	TRACKBALL_REG_TIME_FLASH_HB 	= 0x0E,
+			TRACKBALL_REG_TIME_FLASH_HB 	= 0x0E,
 	R_TCLEAR,	TRACKBALL_REG_TIME_CLEAR 	= 0x0F,
 			TRACKBALL_REG_TIME_CLEAR_HB	= 0x10,
 	R_TREAD,	TRACKBALL_REG_TIME_READ 	= 0x11,
@@ -66,22 +61,15 @@ typedef struct {
 	uint8_t size;
 	uint8_t mode;
 
-} reg_ptr_t;
+} *reg_ptr_t;
 
 typedef struct
 {
 	i2cendpoint_t endpoint;
 	
-	union 
-	{
-		point_t position;
-		point_t pos;
-	};
-
-	uint8_t _mem[R_SIZEOF];
-	inline reg_ptr_t reg(int r) { return (reg_ptr_t) _mem[r]; }
+	uint8_t _mem[R_SIZEOF + 3];
+	inline reg_ptr_t reg(int r) { return (reg_ptr_t) (_mem+r); }
 
 } trackball_t;
-
 
 extern trackball_t TRACKBALL;

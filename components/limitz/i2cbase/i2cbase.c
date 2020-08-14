@@ -3,8 +3,7 @@
 
 int i2cbase_init();
 int i2cbase_deinit();
-int i2cbase_write_message(const i2cmsg_t* msg);
-int i2cbase_write(const i2cendpoint_t* endpoint, const i2creg_t* reg);
+int i2cbase_write(const i2cendpoint_t* endpoint, uint8_t reg, const void* data, int len);
 
 i2cbase_t I2C = 
 {
@@ -12,25 +11,21 @@ i2cbase_t I2C =
 	.flags = 0,
 	.ports =
 	{
-#if CONFIG_LMTZ_I2CPORT0_EN
 		{	
 			.port = 0,
+			.flags = (CONFIG_LMTZ_I2CPORT0_EN ? F_EN : 0),
 			.freq = I2C0_FREQ,
 			.pins = { .SDA = I2C0_SDA, .SCL = I2C0_SCL },
 		},
-#endif
-#if CONFIG_LMTZ_I2CPORT0_EN
-
 		{
 			.port = 1,
+			.flags = (CONFIG_LMTZ_I2CPORT1_EN ? F_EN : 0),
 			.freq = I2C1_FREQ,
 			.pins = { .SDA = I2C1_SDA, .SCL = I2C1_SCL },
 		},
 	},
-#endif
 	.init = i2cbase_init,
 	.deinit = i2cbase_deinit,
-	.write_message = i2cbase_write_message,
 	.write = i2cbase_write,
 };
 
@@ -40,9 +35,11 @@ int i2cbase_init()
 	int err;
 	i2cport_t* port;
 
-	for (i=0; i<I2CBASE_NUM_PORTS; i++)
+	for (i=0; i<2; i++)
 	{
 		port = &I2C.ports[i];
+		
+		if (!(port->flags & F_EN)) continue;
 
 		i2c_config_t config = 
 		{
@@ -77,27 +74,13 @@ int i2cbase_deinit()
 	return res;
 }
 
-int i2cbase_write(const i2cendpoint_t* endpoint, const i2creg_t* reg)
+int i2cbase_write(const i2cendpoint_t* endpoint, uint8_t reg, const void* data, int len)
 {
 	// TODO check if mode contains write bit
-	i2cmsg_t msg = {
-		.port = endpoint->port | 0x80,
-		.addr = endpoint->addr,
-		.len = reg->mode.size & 0xF,
-	};
-	memcpy(msg.data, reg->value, msg.len);
-	
-	return i2cbase_write_message(&msg);
-}
-
-int i2cbase_write_message(const i2cmsg_t* msg)
-{
-
 	int err;
 
-	if (msg->port >= I2CBASE_NUM_PORTS) return ESP_FAIL;
-	i2cport_t* port = &I2C.ports[msg->port];
-	if (!port) return ESP_FAIL;
+	i2cport_t* port = &I2C.ports[endpoint->port];
+	if (!port || !(port->flags & F_EN)) return ESP_FAIL;
 	
 	i2c_cmd_handle_t cmd = i2c_cmd_link_create();
 	err = i2c_master_start(cmd);
@@ -106,7 +89,7 @@ int i2cbase_write_message(const i2cmsg_t* msg)
 		i2c_cmd_link_delete(cmd); 
 		return err; 
 	}
-	err = i2c_master_write_byte(cmd, (msg->addr << 1) | I2C_MASTER_WRITE, 0x01);
+	err = i2c_master_write_byte(cmd, (endpoint->addr << 1) | I2C_MASTER_WRITE, 0x01);
 	if (ESP_OK != err) 
 	{ 
 		i2c_master_stop(cmd); 
@@ -114,9 +97,9 @@ int i2cbase_write_message(const i2cmsg_t* msg)
 		return err; 
 	}
 	int i;
-	for (i=0; i<msg->len; i++)
+	for (i=0; i<len; i++)
 	{
- 		err = i2c_master_write_byte(cmd, msg->data[i], 0x01);
+ 		err = i2c_master_write_byte(cmd, ((const uint8_t*)data)[i], 0x01);
 		if (ESP_OK != err) 
 		{
 			i2c_master_stop(cmd);

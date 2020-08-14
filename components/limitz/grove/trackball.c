@@ -3,10 +3,8 @@
 
 trackball_t TRACKBALL = {
 	.endpoint = {
-	
 		.port = LMTZ_TRACKBALL_PORT,
 		.addr = LMTZ_TRACKBALL_ADDR,
-
 	}
 
 };
@@ -23,7 +21,9 @@ int trackball_init()
 	reg = TRACKBALL.reg(R_VALID);
 	reg->u32 = 0;
 	
-	err = I2C.write(&TRACKBALL.endpoint, );
+	i2cmsg_t msg
+
+	err = I2C.write(&TRACKBALL.endpoint, R_VALID, );
 	if (err) return err;
 
 
