@@ -104,6 +104,38 @@ void app_main()
 	int flash_toggle = 0;
 
 	gui_init();
+	
+	static lv_style_t arc_fg, arc_bg;
+	
+	lv_style_t* s = &arc_fg;
+	lv_style_init(s);
+	lv_style_set_border_side(s, LV_STATE_DEFAULT, LV_BORDER_SIDE_NONE);
+
+	lv_style_set_bg_opa(s, LV_STATE_DEFAULT, LV_OPA_0);
+	lv_style_set_line_color(s, LV_STATE_DEFAULT, LV_COLOR_MAKE(0xFF,0x22,0x00));
+	lv_style_set_line_width(s, LV_STATE_DEFAULT, 8);
+	lv_style_set_line_rounded(s,LV_STATE_DEFAULT, true);
+	
+	s = &arc_bg;
+	lv_style_init(s);
+	lv_style_set_border_side(s, LV_STATE_DEFAULT, LV_BORDER_SIDE_NONE);
+	lv_style_set_bg_opa(s, LV_STATE_DEFAULT, LV_OPA_0);
+	lv_style_set_line_color(s, LV_STATE_DEFAULT, LV_COLOR_MAKE(0x33,0x00,0x00));
+	lv_style_set_line_width(s, LV_STATE_DEFAULT, 8);
+	lv_style_set_line_rounded(s,LV_STATE_DEFAULT, true);
+
+
+	lv_obj_t* arc = lv_arc_create(gui_root(), NULL);
+	lv_obj_add_style(arc, LV_ARC_PART_BG, &arc_bg);
+	lv_obj_add_style(arc, LV_ARC_PART_INDIC, &arc_fg);
+	lv_obj_set_size(arc, 120,120);
+	lv_arc_set_bg_angles(arc,0, 360);
+	lv_arc_set_angles(arc, 0, 230);
+	lv_obj_align(arc, NULL, LV_ALIGN_CENTER, 0, 0);
+
+
+	gui_start();
+
 
 	for (uint8_t c = 0; ++c; c %= 3)
 	{

@@ -23,6 +23,7 @@
 
 static SemaphoreHandle_t s_lock_ui;
 static lv_style_t s_background;
+static lv_obj_t* s_screen;
 
 static void proc_tick(void* args)
 {
@@ -75,6 +76,19 @@ static void backlight_init()
 
 static void task_gui(void* args)
 {
+        for (;;)
+        {
+                vTaskDelay(1);
+                if (xSemaphoreTake(s_lock_ui, (TickType_t) 10) == pdTRUE)
+                {
+                        lv_task_handler();
+                        xSemaphoreGive(s_lock_ui);
+                }
+        }
+}
+
+int gui_init()
+{
 	s_lock_ui = xSemaphoreCreateMutex();
 
 	lv_init();
@@ -115,23 +129,27 @@ static void task_gui(void* args)
         lv_style_set_line_rounded(s, LV_STATE_DEFAULT, true);
 
 
+	s_screen = lv_obj_create(lv_scr_act(), NULL);
+	lv_obj_add_style(s_screen, LV_OBJ_PART_MAIN, &s_background);
+	lv_obj_set_size(s_screen, CONFIG_LVGL_DISPLAY_WIDTH, CONFIG_LVGL_DISPLAY_HEIGHT);
+	lv_obj_set_pos(s_screen, 0, 0);
+
+
 #if CONFIG_LMTZ_BACKLIGHT_PWM_EN
 	backlight_init();
 #endif
-        for (;;)
-        {
-                vTaskDelay(1);
-                if (xSemaphoreTake(s_lock_ui, (TickType_t) 10) == pdTRUE)
-                {
-                        lv_task_handler();
-                        xSemaphoreGive(s_lock_ui);
-                }
-        }
+	return ESP_OK;
 }
 
-int gui_init()
+int gui_start()
 {
+
 	// run on core 1 by default, maybe add some config stuff later
 	xTaskCreatePinnedToCore(task_gui, "GUI task", 4096, NULL, 0, NULL, 1);
 	return ESP_OK;
+}
+
+lv_obj_t* gui_root()
+{
+	return s_screen;
 }
