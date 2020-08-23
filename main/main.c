@@ -18,7 +18,8 @@
 #include "lipo.h"
 #include "servo.h"
 #include "apa102.h"
-#include "i2cbase.h"
+#include "i2cbus.h"
+#include "ht16k33.h"
 #include "gui.h"
 
 typedef struct
@@ -86,6 +87,16 @@ void app_main()
 {
 	ESP_ERROR_CHECK( nvs_flash_init() );
 	
+	ESP_ERROR_CHECK(i2c_init());
+	
+	ht16k33_t* segled = &g_ht16k33_bus1_0x70;
+	ht16k33_init(segled);
+
+	segled->content = HT16K33_CONTENT_STRING;
+	strcpy(segled->stringval, "EDDY");
+	ESP_ERROR_CHECK(ht16k33_update(segled));
+
+
 	servo_init(&local.steering);
 	servo_init(&local.throttle);
 	

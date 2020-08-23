@@ -1,86 +1,129 @@
 menu "LIMITZ I2C"
 
-	config LMTZ_I2CPORT0_EN
-	bool "Enable port 0"
 
-		config LMTZ_I2CPORT0_SDA
-		depends on LMTZ_I2CPORT0_EN
+	config LMTZ_I2C_BUS0_EN
+	bool "Enable i2c bus 0"
+
+		config LMTZ_I2C_BUS0_SDA
+		depends on LMTZ_I2C_BUS0_EN
 		int "SDA Pin number" 
 		range 0 31
 		default 21
 	
-		config LMTZ_I2CPORT0_SCL
-		depends on LMTZ_I2CPORT0_EN
+		config LMTZ_I2C_BUS0_SCL
+		depends on LMTZ_I2C_BUS0_EN
 		int "SCL Pin number"
 		range 0 31
 		default 22
 	
-		choice LMTZ_I2CPORT0_FREQ_SELECT	
-		depends on LMTZ_I2CPORT0_EN
+		choice LMTZ_I2C_BUS0_FREQ_SELECT	
+		depends on LMTZ_I2C_BUS0_EN
 		prompt "Frequency"
-			config  LMTZ_I2CPORT0_FREQ_1
+			config  LMTZ_I2C_BUS0_FREQ_1
 			bool "1 Mhz"
 
-			config  LMTZ_I2CPORT0_FREQ_5
+			config  LMTZ_I2C_BUS0_FREQ_5
 			bool "5 Mhz"
 
-			config  LMTZ_I2CPORT0_FREQ_10
+			config  LMTZ_I2C_BUS0_FREQ_10
 			bool "10 Mhz"
 
-			config  LMTZ_I2CPORT0_FREQ_20
+			config  LMTZ_I2C_BUS0_FREQ_20
 			bool "20 Mhz"
 
 		endchoice
 
-		config LMTZ_I2CPORT0_FREQUENCY
-		depends on LMTZ_I2CPORT0_EN
+		config LMTZ_I2C_BUS0_FREQ
+		depends on LMTZ_I2C_BUS0_EN
 		int
-		default 1000000  if LMTZ_I2CPORT0_FREQ_1
-		default 5000000  if LMTZ_I2CPORT0_FREQ_5
-		default 10000000 if LMTZ_I2CPORT0_FREQ_10
-		default 20000000 if LMTZ_I2CPORT0_FREQ_20
+		default 1000000  if LMTZ_I2C_BUS0_FREQ_1
+		default 5000000  if LMTZ_I2C_BUS0_FREQ_5
+		default 10000000 if LMTZ_I2C_BUS0_FREQ_10
+		default 20000000 if LMTZ_I2C_BUS0_FREQ_20
 
+	config LMTZ_I2C_BUS1_EN
+	bool "Enable i2c bus 1"
 
-	config LMTZ_I2CPORT1_EN
-	bool "Enable port 1"
-
-		config LMTZ_I2CPORT1_SDA
-		depends on LMTZ_I2CPORT1_EN
+		config LMTZ_I2C_BUS1_SDA
+		depends on LMTZ_I2C_BUS1_EN
 		int "SDA Pin number" 
 		range 0 31
 		default 26
 	
-		config LMTZ_I2CPORT1_SCL
-		depends on LMTZ_I2CPORT1_EN
+		config LMTZ_I2C_BUS1_SCL
+		depends on LMTZ_I2C_BUS1_EN
 		int "SCL Pin number"
 		range 0 31
 		default 27
 	
-		choice LMTZ_I2CPORT1_FREQ_SELECT	
-		depends on LMTZ_I2CPORT1_EN
+		choice LMTZ_I2C_BUS1_FREQ_SELECT	
+		depends on LMTZ_I2C_BUS1_EN
 		prompt "Frequency"
-			config  LMTZ_I2CPORT1_FREQ_1
+			config  LMTZ_I2C_BUS1_FREQ_1
 			bool "1 Mhz"
 
-			config  LMTZ_I2CPORT1_FREQ_5
+			config  LMTZ_I2C_BUS1_FREQ_5
 			bool "5 Mhz"
 
-			config  LMTZ_I2CPORT1_FREQ_10
+			config  LMTZ_I2C_BUS1_FREQ_10
 			bool "10 Mhz"
 
-			config  LMTZ_I2CPORT1_FREQ_20
+			config  LMTZ_I2C_BUS1_FREQ_20
 			bool "20 Mhz"
 
 		endchoice
 
-		config LMTZ_I2CPORT1_FREQUENCY
-		depends on LMTZ_I2CPORT1_EN
+		config LMTZ_I2C_BUS1_FREQ
+		depends on LMTZ_I2C_BUS1_EN
 		int
-		default 1000000  if LMTZ_I2CPORT1_FREQ_1
-		default 5000000  if LMTZ_I2CPORT1_FREQ_5
-		default 10000000 if LMTZ_I2CPORT1_FREQ_10
-		default 20000000 if LMTZ_I2CPORT1_FREQ_20
+		default 1000000  if LMTZ_I2C_BUS1_FREQ_1
+		default 5000000  if LMTZ_I2C_BUS1_FREQ_5
+		default 10000000 if LMTZ_I2C_BUS1_FREQ_10
+		default 20000000 if LMTZ_I2C_BUS1_FREQ_20
 
+		menu "Attached peripherals"
+		depends on LMTZ_I2C_BUS1_EN
+			
+			choice LMTZ_I2C_HT16K33_TYPE
+			default LMTZ_I2C_BUS1_HT16K33_0x70_DIS
+			prompt "HT16K33 @0x70"
+			
+				config LMTZ_I2C_BUS1_HT16K33_0x70_DIS
+				bool "Disabled"
 
+				config LMTZ_I2C_BUS1_HT16K33_0x70_NUMERIC_X4
+				bool "Adafruit 4 digit numeric"
 
+				config LMTZ_I2C_BUS1_HT16K33_0x70_NUMERIC_X4L
+				bool "Adafruit 4 digit numeric LARGE"
+				
+				config LMTZ_I2C_BUS1_HT16K33_0x70_APHANUMERIC_X4
+				bool "Adafruit 4 character alphanumeric"
+
+				config LMTZ_I2C_BUS1_HT16K33_0x70_MATRIX
+				bool "Adafruit 8x8 matrix"
+
+				config LMTZ_I2C_BUS1_HT16K33_0x70_OTHER
+				bool "Other HT16K33"
+
+			endchoice
+
+			config LMTZ_I2C_BUS1_HT16K33_0x70_EN
+			depends on LMTZ_I2C_BUS1_EN
+			bool 
+			default n if LMTZ_i2C_BUS1_HT16K33_0x70_DIS
+			default y
+
+			config LMTZ_I2C_BUS1_HT16K33_0x70_TYPE
+			depends on LMTZ_I2C_BUS1_EN
+			int
+			default 0 if LMTZ_I2C_BUS1_HT16K33_0x70_OTHER
+			default 1 if LMTZ_I2C_BUS1_HT16K33_0x70_NUMERIC_X4
+			default 2 if LMTZ_I2C_BUS1_HT16K33_0x70_NUMERIC_X4L
+			default 3 if LMTZ_I2C_BUS1_HT16K33_0x70_ALPANUMERIC_X4
+			default 4 if LMTZ_I2C_BUS1_HT16K33_0x70_MATRIX
+			default -1
+
+		endmenu
+	
 endmenu
