@@ -83,6 +83,23 @@ ht16k33_t g_ht16k33[16] = {
 	},
 };
 
+static const uint16_t numfonttable[] = {
+	0x3F, // 0
+	0x06, // 1
+	0x5B, // 2
+	0x4F, // 3
+	0x66, // 4
+	0x6D, // 5
+	0x7D, // 6
+	0x07, // 7
+	0x7F, // 8
+	0x6F, // 9
+
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // hex
+	0x40, // -
+	0x63, // deg (c)
+	0x00, // space
+};
 
 static const uint16_t alphafonttable[] = {
     0b0000000000000001, 0b0000000000000010, 0b0000000000000100,
@@ -214,7 +231,9 @@ int ht16k33_update(ht16k33_t* self)
 		ESP_ERROR_CHECK(ESP_FAIL);
 		return ESP_FAIL;
 	}
-	
+
+	ESP_LOGE(__func__, "writing to %d, %x", self->device.bus, self->device.addr);
+
 	err = i2c_send_cmd(&self->dev, 0x21);
 	if (ESP_OK != err) return err;
 
@@ -229,6 +248,9 @@ int ht16k33_update(ht16k33_t* self)
 	{
 	case HT16K33_CONTENT_INT:	snprintf(str, 18, "%4d", self->intval % 10000); break;
 	case HT16K33_CONTENT_INT_HEX:	snprintf(str, 18, "%04X", self->intval & 0xFFFF); break;
+	//TODO: case HT16K33_CONTENT_TIME:	snprintf(str, 18, "%04X", self->intval & 0xFFFF); break;
+	case HT16K33_CONTENT_DEGREES:	snprintf(str, 18, "%3dc", self->intval % 1000); break;
+
 	case HT16K33_CONTENT_FLOAT:	snprintf(str, 18, "%f", self->floatval); break;
 	case HT16K33_CONTENT_STRING:	snprintf(str, 18, "%s", self->stringval); break;
 	default: break;
@@ -244,7 +266,15 @@ int ht16k33_update(ht16k33_t* self)
 			if (i == 2) str[i] = ofs = 0x00;
 			else
 			{
-				uint16_t mask = alphafonttable[(int)str[i + ofs]];
+				int key = (int)str[i + ofs];
+				switch (key)
+				{
+					case '-': key = 16; break;
+					case 'c': key = 17; break;
+					case ' ': key = 18; break;
+					default: key = key - '0'; break;
+				}
+				uint16_t mask = numfonttable[key];
 				str[(i<<1)+1] = mask & 0xFF;
 				str[(i<<1)+2] = mask >> 8;
 			}

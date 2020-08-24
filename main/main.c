@@ -95,8 +95,8 @@ void app_main()
 	ht16k33_init(segled2);
 
 
-	segled1->content = HT16K33_CONTENT_INT;
-	segled1->intval = 1234;
+	segled1->content = HT16K33_CONTENT_DEGREES;
+	segled1->intval = 120;
 
 
 	segled2->content = HT16K33_CONTENT_STRING;
