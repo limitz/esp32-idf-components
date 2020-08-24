@@ -89,12 +89,20 @@ void app_main()
 	
 	ESP_ERROR_CHECK(i2c_init());
 	
-	ht16k33_t* segled = &g_ht16k33_bus1_0x70;
-	ht16k33_init(segled);
+	ht16k33_t* segled1 = &g_ht16k33[0x8];
+	ht16k33_t* segled2 = &g_ht16k33[0xF];
+	ht16k33_init(segled1);
+	ht16k33_init(segled2);
 
-	segled->content = HT16K33_CONTENT_STRING;
-	strcpy(segled->stringval, "EDDY");
-	ESP_ERROR_CHECK(ht16k33_update(segled));
+
+	segled1->content = HT16K33_CONTENT_INT;
+	segled1->intval = 1234;
+
+
+	segled2->content = HT16K33_CONTENT_STRING;
+	strcpy(segled2->stringval, "LMTZ");
+	ESP_ERROR_CHECK(ht16k33_update(segled1));
+	ESP_ERROR_CHECK(ht16k33_update(segled2));
 
 
 	servo_init(&local.steering);

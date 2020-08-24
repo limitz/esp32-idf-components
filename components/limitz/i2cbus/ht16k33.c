@@ -1,49 +1,88 @@
 #include "ht16k33.h"
 
-
-#if HT16K33_B00_EN
-ht16k33_t g_ht16k33_bus0_0x70 = {
-	.device.bus = 0,
-	.device.addr = 0x70,
-	.type = HT16K33_B00_TYPE,
-	.blinkmode = 0,
-	.brightness = 0xF
+ht16k33_t g_ht16k33[16] = {
+	{
+		#if HT16K33_B00_EN
+		.device = { .bus = 0, .addr = 0x70 }, .type = HT16K33_B00_TYPE, .brightness = 8,
+		#endif
+	},{
+		#if HT16K33_B01_EN
+		.device = { .bus = 0, .addr = 0x71 }, .type = HT16K33_B01_TYPE, 
+		.brightness = 8,
+		#endif
+	},{
+		#if HT16K33_B02_EN
+		.device = { .bus = 0, .addr = 0x72 }, .type = HT16K33_B02_TYPE,
+		.brightness = 8,
+		#endif
+	},{
+		#if HT16K33_B03_EN
+		.device = { .bus = 0, .addr = 0x73 }, .type = HT16K33_B03_TYPE,
+		.brightness = 8,
+		#endif
+	},{
+		#if HT16K33_B04_EN
+		.device = { .bus = 0, .addr = 0x74 }, .type = HT16K33_B04_TYPE,
+		.brightness = 8,
+		#endif
+	},{
+		#if HT16K33_B05_EN
+		.device = { .bus = 0, .addr = 0x75 }, .type = HT16K33_B05_TYPE,
+		.brightness = 8,
+		#endif
+	},{
+		#if HT16K33_B06_EN
+		.device = { .bus = 0, .addr = 0x76 }, .type = HT16K33_B06_TYPE,
+		.brightness = 8,
+		#endif
+	},{
+		#if HT16K33_B07_EN
+		.device = { .bus = 0, .addr = 0x77 }, .type = HT16K33_B07_TYPE,
+		.brightness = 8,
+		#endif
+	},{
+		#if HT16K33_B10_EN
+		.device = { .bus = 1, .addr = 0x70 }, .type = HT16K33_B10_TYPE,
+		.brightness = 8,
+		#endif
+	},{
+		#if HT16K33_B11_EN
+		.device = { .bus = 1, .addr = 0x71 }, .type = HT16K33_B11_TYPE,
+		.brightness = 8,
+		#endif
+	},{
+		#if HT16K33_B12_EN
+		.device = { .bus = 1, .addr = 0x72 }, .type = HT16K33_B12_TYPE,
+		.brightness = 8,
+		#endif
+	},{
+		#if HT16K33_B13_EN
+		.device = { .bus = 1, .addr = 0x73 }, .type = HT16K33_B13_TYPE,
+		.brightness = 8,
+		#endif
+	},{
+		#if HT16K33_B14_EN
+		.device = { .bus = 1, .addr = 0x74 }, .type = HT16K33_B14_TYPE,
+		.brightness = 8,
+		#endif
+	},{
+		#if HT16K33_B15_EN
+		.device = { .bus = 1, .addr = 0x75 }, .type = HT16K33_B15_TYPE,
+		.brightness = 8,
+		#endif
+	},{
+		#if HT16K33_B16_EN
+		.device = { .bus = 1, .addr = 0x76 }, .type = HT16K33_B16_TYPE,
+		.brightness = 8,
+		#endif
+	},{
+		#if HT16K33_B17_EN
+		.device = { .bus = 1, .addr = 0x77 }, .type = HT16K33_B17_TYPE,
+		.brightness = 8,
+		#endif
+	},
 };
-#endif
 
-#if HT16K33_B10_EN
-ht16k33_t g_ht16k33_bus1_0x70 = {
-
-	.device.bus = 1,
-	.device.addr = 0x70,
-	.type = HT16K33_B10_TYPE,
-	.blinkmode = 0,
-	.brightness = 0xF
-};
-#endif
-
-//etc
-
-#if 0
-static const uint16_t numbertable[] = {
-        0x003F, /* 0 */
-        0x0006, /* 1 */
-        0x005B, /* 2 */
-        0x004F, /* 3 */
-        0x0066, /* 4 */
-        0x006D, /* 5 */
-        0x007D, /* 6 */
-        0x0007, /* 7 */
-        0x007F, /* 8 */
-        0x006F, /* 9 */
-        0x0077, /* a */
-        0x007C, /* b */
-        0x0039, /* C */
-        0x005E, /* d */
-        0x0079, /* E */
-        0x0071, /* F */
-};
-#endif
 
 static const uint16_t alphafonttable[] = {
     0b0000000000000001, 0b0000000000000010, 0b0000000000000100,
@@ -167,14 +206,15 @@ int ht16k33_deinit(ht16k33_t* self)
 
 int ht16k33_update(ht16k33_t* self)
 {
-	int err;
+	int err, ofs;
+	char str[18] = {0};
 
-	if (!self->device.addr) 
+	if (0x70 > self->device.addr || 0x78 <= self->device.addr)
 	{
-		ESP_LOGE(__func__, "No address for i2c device");
+		ESP_ERROR_CHECK(ESP_FAIL);
 		return ESP_FAIL;
 	}
-
+	
 	err = i2c_send_cmd(&self->dev, 0x21);
 	if (ESP_OK != err) return err;
 
@@ -182,38 +222,54 @@ int ht16k33_update(ht16k33_t* self)
 	if (ESP_OK != err) return err;
 
 	err = i2c_send_cmd(&self->dev, HT16K33_BLINK_CMD|HT16K33_DISPLAYON|(((self->blinkmode & 0x03) << 1)));
-
 	if (ESP_OK != err) return err;
 
 
-	char str[9] = {0};
-	
 	switch (self->content)
 	{
-	case HT16K33_CONTENT_INT:
-		snprintf(str, 9, "%4d", self->intval);
+	case HT16K33_CONTENT_INT:	snprintf(str, 18, "%4d", self->intval % 10000); break;
+	case HT16K33_CONTENT_INT_HEX:	snprintf(str, 18, "%04X", self->intval & 0xFFFF); break;
+	case HT16K33_CONTENT_FLOAT:	snprintf(str, 18, "%f", self->floatval); break;
+	case HT16K33_CONTENT_STRING:	snprintf(str, 18, "%s", self->stringval); break;
+	default: break;
+	}
+
+	switch (self->type)
+	{
+	case HT16K33_TYPE_NUMERIC_X4:
+	case HT16K33_TYPE_NUMERIC_X4L:
+		ofs = -1;
+		for (int i=4; i>=0; i--)
+		{
+			if (i == 2) str[i] = ofs = 0x00;
+			else
+			{
+				uint16_t mask = alphafonttable[(int)str[i + ofs]];
+				str[(i<<1)+1] = mask & 0xFF;
+				str[(i<<1)+2] = mask >> 8;
+			}
+		}
+		ofs = 11;
 		break;
-	case HT16K33_CONTENT_INT_HEX:
-		snprintf(str, 9, "%04X", self->intval);
-		break;
-	case HT16K33_CONTENT_STRING:
-		snprintf(str, 9, "%s", self->stringval);
-		break;
+
+	case HT16K33_TYPE_ALPHANUMERIC_X4:
+		ofs = 0;
+		for (int i=3; i>=0; i--)
+		{
+			uint16_t mask = alphafonttable[(int)str[i + ofs]];
+			str[(i<<1)+1] = mask & 0xFF;
+			str[(i<<1)+2] = mask >> 8;
+		}
+		ofs = 9;
+		break;	
 	default:
-		ESP_LOGW(__func__, "Unknown content");
+		ESP_LOGE(__func__, "Not implemented");
 		return ESP_FAIL;
 	}
-
-	ESP_LOGI(__func__, "content in str: %s", str);
-
-	for (int i=3; i>=0; i--)
-	{
-		uint16_t mask = alphafonttable[(int)str[i]];
-		str[i*2 + 1] = mask & 0xFF;
-		str[i*2 + 2] = mask >> 8;
-	}
+	
 	str[0] = 0x00;
-	ESP_LOG_BUFFER_HEX(__func__, str, 9);
-	i2c_send_data(&self->device, str, 9);
+	ESP_LOG_BUFFER_HEX(__func__, str, ofs);
+	i2c_send_data(&self->device, str, ofs);
+	
 	return ESP_OK;
 }
