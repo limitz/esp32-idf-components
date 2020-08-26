@@ -164,6 +164,207 @@ menu "LIMITZ I2C"
 			default 4 if LMTZ_I2C_BUS1_HT16K33_0x71_MATRIX
 			default -1
 			
+			choice LMTZ_I2C_HT16K33_B12_TYPE
+			default LMTZ_I2C_BUS1_HT16K33_0x72_DIS
+			prompt "HT16K33 @0x72"
+			
+				config LMTZ_I2C_BUS1_HT16K33_0x72_DIS
+				bool "Disabled"
+
+				config LMTZ_I2C_BUS1_HT16K33_0x72_NUMERIC_X4
+				bool "Adafruit 4 digit numeric"
+
+				config LMTZ_I2C_BUS1_HT16K33_0x72_NUMERIC_X4L
+				bool "Adafruit 4 digit numeric LARGE"
+				
+				config LMTZ_I2C_BUS1_HT16K33_0x72_ALPHANUMERIC_X4
+				bool "Adafruit 4 character alphanumeric"
+
+				config LMTZ_I2C_BUS1_HT16K33_0x72_MATRIX
+				bool "Adafruit 8x8 matrix"
+
+				config LMTZ_I2C_BUS1_HT16K33_0x72_OTHER
+				bool "Other HT16K33"
+
+			endchoice
+
+			config LMTZ_I2C_BUS1_HT16K33_0x72_EN
+			depends on LMTZ_I2C_BUS1_EN
+			bool 
+			default n if LMTZ_i2C_BUS1_HT16K33_0x72_DIS
+			default y
+
+			config LMTZ_I2C_BUS1_HT16K33_0x72_TYPE
+			depends on LMTZ_I2C_BUS1_EN
+			int
+			default 0 if LMTZ_I2C_BUS1_HT16K33_0x72_OTHER
+			default 1 if LMTZ_I2C_BUS1_HT16K33_0x72_NUMERIC_X4
+			default 2 if LMTZ_I2C_BUS1_HT16K33_0x72_NUMERIC_X4L
+			default 3 if LMTZ_I2C_BUS1_HT16K33_0x72_ALPHANUMERIC_X4
+			default 4 if LMTZ_I2C_BUS1_HT16K33_0x72_MATRIX
+			default -1
+			
+			choice LMTZ_I2C_HT16K33_B13_TYPE
+			default LMTZ_I2C_BUS1_HT16K33_0x73_DIS
+			prompt "HT16K33 @0x73"
+			
+				config LMTZ_I2C_BUS1_HT16K33_0x73_DIS
+				bool "Disabled"
+
+				config LMTZ_I2C_BUS1_HT16K33_0x73_NUMERIC_X4
+				bool "Adafruit 4 digit numeric"
+
+				config LMTZ_I2C_BUS1_HT16K33_0x73_NUMERIC_X4L
+				bool "Adafruit 4 digit numeric LARGE"
+				
+				config LMTZ_I2C_BUS1_HT16K33_0x73_ALPHANUMERIC_X4
+				bool "Adafruit 4 character alphanumeric"
+
+				config LMTZ_I2C_BUS1_HT16K33_0x73_MATRIX
+				bool "Adafruit 8x8 matrix"
+
+				config LMTZ_I2C_BUS1_HT16K33_0x73_OTHER
+				bool "Other HT16K33"
+
+			endchoice
+
+			config LMTZ_I2C_BUS1_HT16K33_0x73_EN
+			depends on LMTZ_I2C_BUS1_EN
+			bool 
+			default n if LMTZ_i2C_BUS1_HT16K33_0x73_DIS
+			default y
+
+			config LMTZ_I2C_BUS1_HT16K33_0x73_TYPE
+			depends on LMTZ_I2C_BUS1_EN
+			int
+			default 0 if LMTZ_I2C_BUS1_HT16K33_0x73_OTHER
+			default 1 if LMTZ_I2C_BUS1_HT16K33_0x73_NUMERIC_X4
+			default 2 if LMTZ_I2C_BUS1_HT16K33_0x73_NUMERIC_X4L
+			default 3 if LMTZ_I2C_BUS1_HT16K33_0x73_ALPHANUMERIC_X4
+			default 4 if LMTZ_I2C_BUS1_HT16K33_0x73_MATRIX
+			default -1
+
+			choice LMTZ_I2C_HT16K33_B14_TYPE
+			default LMTZ_I2C_BUS1_HT16K33_0x74_DIS
+			prompt "HT16K33 @0x74"
+			
+				config LMTZ_I2C_BUS1_HT16K33_0x74_DIS
+				bool "Disabled"
+
+				config LMTZ_I2C_BUS1_HT16K33_0x74_NUMERIC_X4
+				bool "Adafruit 4 digit numeric"
+
+				config LMTZ_I2C_BUS1_HT16K33_0x74_NUMERIC_X4L
+				bool "Adafruit 4 digit numeric LARGE"
+				
+				config LMTZ_I2C_BUS1_HT16K33_0x74_ALPHANUMERIC_X4
+				bool "Adafruit 4 character alphanumeric"
+
+				config LMTZ_I2C_BUS1_HT16K33_0x74_MATRIX
+				bool "Adafruit 8x8 matrix"
+
+				config LMTZ_I2C_BUS1_HT16K33_0x74_OTHER
+				bool "Other HT16K33"
+
+			endchoice
+
+			config LMTZ_I2C_BUS1_HT16K33_0x74_EN
+			depends on LMTZ_I2C_BUS1_EN
+			bool 
+			default n if LMTZ_i2C_BUS1_HT16K33_0x74_DIS
+			default y
+
+			config LMTZ_I2C_BUS1_HT16K33_0x74_TYPE
+			depends on LMTZ_I2C_BUS1_EN
+			int
+			default 0 if LMTZ_I2C_BUS1_HT16K33_0x74_OTHER
+			default 1 if LMTZ_I2C_BUS1_HT16K33_0x74_NUMERIC_X4
+			default 2 if LMTZ_I2C_BUS1_HT16K33_0x74_NUMERIC_X4L
+			default 3 if LMTZ_I2C_BUS1_HT16K33_0x74_ALPHANUMERIC_X4
+			default 4 if LMTZ_I2C_BUS1_HT16K33_0x74_MATRIX
+			default -1
+
+			choice LMTZ_I2C_HT16K33_B15_TYPE
+			default LMTZ_I2C_BUS1_HT16K33_0x75_DIS
+			prompt "HT16K33 @0x75"
+			
+				config LMTZ_I2C_BUS1_HT16K33_0x75_DIS
+				bool "Disabled"
+
+				config LMTZ_I2C_BUS1_HT16K33_0x75_NUMERIC_X4
+				bool "Adafruit 4 digit numeric"
+
+				config LMTZ_I2C_BUS1_HT16K33_0x75_NUMERIC_X4L
+				bool "Adafruit 4 digit numeric LARGE"
+				
+				config LMTZ_I2C_BUS1_HT16K33_0x75_ALPHANUMERIC_X4
+				bool "Adafruit 4 character alphanumeric"
+
+				config LMTZ_I2C_BUS1_HT16K33_0x75_MATRIX
+				bool "Adafruit 8x8 matrix"
+
+				config LMTZ_I2C_BUS1_HT16K33_0x75_OTHER
+				bool "Other HT16K33"
+
+			endchoice
+
+			config LMTZ_I2C_BUS1_HT16K33_0x75_EN
+			depends on LMTZ_I2C_BUS1_EN
+			bool 
+			default n if LMTZ_i2C_BUS1_HT16K33_0x75_DIS
+			default y
+
+			config LMTZ_I2C_BUS1_HT16K33_0x75_TYPE
+			depends on LMTZ_I2C_BUS1_EN
+			int
+			default 0 if LMTZ_I2C_BUS1_HT16K33_0x75_OTHER
+			default 1 if LMTZ_I2C_BUS1_HT16K33_0x75_NUMERIC_X4
+			default 2 if LMTZ_I2C_BUS1_HT16K33_0x75_NUMERIC_X4L
+			default 3 if LMTZ_I2C_BUS1_HT16K33_0x75_ALPHANUMERIC_X4
+			default 4 if LMTZ_I2C_BUS1_HT16K33_0x75_MATRIX
+			default -1
+
+			choice LMTZ_I2C_HT16K33_B16_TYPE
+			default LMTZ_I2C_BUS1_HT16K33_0x76_DIS
+			prompt "HT16K33 @0x76"
+			
+				config LMTZ_I2C_BUS1_HT16K33_0x76_DIS
+				bool "Disabled"
+
+				config LMTZ_I2C_BUS1_HT16K33_0x76_NUMERIC_X4
+				bool "Adafruit 4 digit numeric"
+
+				config LMTZ_I2C_BUS1_HT16K33_0x76_NUMERIC_X4L
+				bool "Adafruit 4 digit numeric LARGE"
+				
+				config LMTZ_I2C_BUS1_HT16K33_0x76_ALPHANUMERIC_X4
+				bool "Adafruit 4 character alphanumeric"
+
+				config LMTZ_I2C_BUS1_HT16K33_0x76_MATRIX
+				bool "Adafruit 8x8 matrix"
+
+				config LMTZ_I2C_BUS1_HT16K33_0x76_OTHER
+				bool "Other HT16K33"
+
+			endchoice
+
+			config LMTZ_I2C_BUS1_HT16K33_0x76_EN
+			depends on LMTZ_I2C_BUS1_EN
+			bool 
+			default n if LMTZ_i2C_BUS1_HT16K33_0x76_DIS
+			default y
+
+			config LMTZ_I2C_BUS1_HT16K33_0x76_TYPE
+			depends on LMTZ_I2C_BUS1_EN
+			int
+			default 0 if LMTZ_I2C_BUS1_HT16K33_0x76_OTHER
+			default 1 if LMTZ_I2C_BUS1_HT16K33_0x76_NUMERIC_X4
+			default 2 if LMTZ_I2C_BUS1_HT16K33_0x76_NUMERIC_X4L
+			default 3 if LMTZ_I2C_BUS1_HT16K33_0x76_ALPHANUMERIC_X4
+			default 4 if LMTZ_I2C_BUS1_HT16K33_0x76_MATRIX
+			default -1
+
+
 			choice LMTZ_I2C_HT16K33_B17_TYPE
 			default LMTZ_I2C_BUS1_HT16K33_0x77_DIS
 			prompt "HT16K33 @0x77"

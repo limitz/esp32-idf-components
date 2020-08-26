@@ -89,20 +89,31 @@ void app_main()
 	
 	ESP_ERROR_CHECK(i2c_init());
 	
-	ht16k33_t* segled1 = &g_ht16k33[0x8];
-	ht16k33_t* segled2 = &g_ht16k33[0xF];
-	ht16k33_init(segled1);
-	ht16k33_init(segled2);
+	ht16k33_t* seg = &g_ht16k33[0x8];
 
+	seg[0].content = HT16K33_CONTENT_DEGREES;
+	seg[0].intval = 120;
 
-	segled1->content = HT16K33_CONTENT_DEGREES;
-	segled1->intval = 120;
+	seg[5].content = HT16K33_CONTENT_STRING;
+	strcpy(seg[5].stringval, "KAT");
 
+	seg[1].content = HT16K33_CONTENT_INT;
+	seg[1].intval = -33;
 
-	segled2->content = HT16K33_CONTENT_STRING;
-	strcpy(segled2->stringval, "LMTZ");
-	ESP_ERROR_CHECK(ht16k33_update(segled1));
-	ESP_ERROR_CHECK(ht16k33_update(segled2));
+	seg[2].content = HT16K33_CONTENT_INT;
+	seg[2].intval = 1337;
+
+	seg[6].content = HT16K33_CONTENT_INT;
+	seg[6].intval = 666;
+	
+	seg[7].content = HT16K33_CONTENT_STRING;
+	strcpy(seg[7].stringval, "LMTZ");
+	ESP_ERROR_CHECK(ht16k33_update(&seg[0]));
+	ESP_ERROR_CHECK(ht16k33_update(&seg[1]));
+	ESP_ERROR_CHECK(ht16k33_update(&seg[5]));
+	ESP_ERROR_CHECK(ht16k33_update(&seg[2]));
+	ESP_ERROR_CHECK(ht16k33_update(&seg[6]));
+	ESP_ERROR_CHECK(ht16k33_update(&seg[7]));
 
 
 	servo_init(&local.steering);
