@@ -29,10 +29,10 @@ int i2cbus_init(i2cbus_t* bus)
 		.master.clk_speed = bus->freq,
 	};
 
-	ESP_ERROR_CHECK(err = i2c_param_config(bus->index, &config));
+	err = i2c_param_config(bus->index, &config);
 	if (ESP_OK != err) return err;
 
-	ESP_ERROR_CHECK(err = i2c_driver_install(bus->index, I2C_MODE_MASTER, 0, 0, 0));
+	err = i2c_driver_install(bus->index, I2C_MODE_MASTER, 0, 0, 0);
 	if (ESP_OK != err) return err;
 
 	return ESP_OK;
@@ -73,13 +73,13 @@ int i2c_send_data(i2cdev_t* dev, const void* data, int len)
 	
 	i2c_cmd_handle_t cmd = i2c_cmd_link_create();
 	
-	ESP_ERROR_CHECK(err = i2c_master_start(cmd));
+	err = i2c_master_start(cmd);
 	if (ESP_OK != err) return err; //delete cmd
 
-	ESP_ERROR_CHECK(err = i2c_master_write_byte(cmd, (dev->addr << 1) | I2C_MASTER_WRITE, 0x01));
+	err = i2c_master_write_byte(cmd, (dev->addr << 1) | I2C_MASTER_WRITE, 0x01);
 	if (ESP_OK != err) return err; // delete and stop
 
-	ESP_ERROR_CHECK(err = i2c_master_write(cmd, data, len, 0x01));
+	err = i2c_master_write(cmd, data, len, 0x01);
 	if (ESP_OK != err) return err; // delete and stop
 	
 	/*
@@ -91,11 +91,10 @@ int i2c_send_data(i2cdev_t* dev, const void* data, int len)
 		if (ESP_OK != err) return err; // delete and stop
 	}
 	*/
-	ESP_ERROR_CHECK(err = i2c_master_stop(cmd));
+	err = i2c_master_stop(cmd);
 	if (ESP_OK != err) return err; // delete
 
-	ESP_ERROR_CHECK(i2c_master_cmd_begin(dev->bus, cmd, 1000 / portTICK_RATE_MS));
-
+	i2c_master_cmd_begin(dev->bus, cmd, 1000 / portTICK_RATE_MS);
 	return err;
 }
 

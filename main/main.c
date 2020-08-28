@@ -17,6 +17,7 @@
 #include "adc.h"
 #include "lipo.h"
 #include "servo.h"
+#include "ms12a.h"
 #include "apa102.h"
 #include "i2cbus.h"
 #include "ht16k33.h"
@@ -88,7 +89,10 @@ void app_main()
 	ESP_ERROR_CHECK( nvs_flash_init() );
 	
 	ESP_ERROR_CHECK(i2c_init());
-	
+
+	ms12a_test_7bit();
+
+
 	ht16k33_t* seg = &g_ht16k33[0x8];
 
 	seg[0].content = HT16K33_CONTENT_DEGREES;

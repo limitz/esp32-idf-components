@@ -228,7 +228,6 @@ int ht16k33_update(ht16k33_t* self)
 
 	if (0x70 > self->device.addr || 0x78 <= self->device.addr)
 	{
-		ESP_ERROR_CHECK(ESP_FAIL);
 		return ESP_FAIL;
 	}
 
