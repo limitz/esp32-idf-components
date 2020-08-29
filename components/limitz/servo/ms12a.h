@@ -7,6 +7,10 @@ struct ms12a_servo_decl;
 struct ms12a_message_decl;
 
 #include <stdint.h>
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "freertos/queue.h"
+#include "driver/uart.h"
 
 typedef uint16_t uint14_t;
 typedef uint8_t uint7_t;
@@ -61,11 +65,12 @@ enum
 #define MS12A_SYSEX_START 0xF0
 #define MS12A_SYSEX_STOP  0xF7
 
-#define MS12A_BUFFER_SIZE 0x40
+#define MS12A_BUFFER_SIZE 128
+#define MS12A_RX_BUFFER_SIZE 2048
 #define MS12A_NUM_SERVOS 3
 #define MS12A_UART_PORT 1
-#define MS12A_UART_PIN_TX 15
-#define MS12A_UART_PIN_RX 16
+#define MS12A_UART_PIN_TX 17
+#define MS12A_UART_PIN_RX 15
 #define MS12A_UART_BAUD_RATE 115200
 
 enum 
@@ -107,12 +112,28 @@ typedef struct
 ms12a_driver_decl
 {
 	ms12a_servo_t servo[MS12A_NUM_SERVOS];
+	uint8_t rx_buffer[MS12A_BUFFER_SIZE];
+	TaskHandle_t task;
+	QueueHandle_t queue;
 } ms12a_t;
 
 
 // API
 int ms12a_init(ms12a_t* self);
-int ms12a_deinit();
+int ms12a_deinit(ms12a_t* self);
+int ms12a_handshake(uint8_t servo);
+int ms12a_set_angle_tare(uint8_t servo);
+int ms12a_set_angle_abs(uint8_t servo, int32_t angle, uint14_t speed);
+int ms12a_set_angle_rel(uint8_t servo, int32_t angle, uint14_t speed);
+int ms12a_get_angle(uint8_t servo);
+int ms12a_set_mode(uint8_t servo, uint7_t mode);
+int ms12a_set_position_abs(uint8_t servo, int32_t pos, uint14_t speed);
+int ms12a_set_position_rel(uint8_t servo, int32_t pos, uint14_t speed);
+int ms12a_return_to_zero(uint8_t servo, uint7_t mode, uint14_t speed);
 
+int ms12a_set_led(uint8_t servo, uint8_t red, uint8_t green, uint8_t blue);
+int ms12a_get_voltage(uint8_t servo);
+
+#define ms12a_set_angle ms12a_set_angle_abs
 // Internal use
 int ms12a_test_7bit();

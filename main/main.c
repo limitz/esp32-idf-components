@@ -92,6 +92,43 @@ void app_main()
 
 	ms12a_test_7bit();
 
+	ms12a_t ms12a;
+	ms12a_init(&ms12a);
+
+	ms12a_handshake(1);
+	ms12a_handshake(2);
+	ms12a_handshake(3);
+
+//	ms12a_set_led(1, 200, 0, 0);
+//	ms12a_set_led(2, 0, 200, 0);
+//	ms12a_set_led(3, 0, 0  , 200);
+
+	//ms12a_set_angle_tare(MS12A_ALL);
+
+//	ms12a_get_voltage(MS12A_ALL);
+	ms12a_set_angle_tare(MS12A_ALL);
+	ms12a_set_angle_rel(3, -135, 20);
+	ms12a_set_angle_rel(2, -45, 10);
+	ms12a_set_angle_rel(1, 90, 20);
+
+	vTaskDelay(2000 / portTICK_PERIOD_MS);
+	//ms12a_return_to_zero(MS12A_ALL, 0, 5);
+
+	ms12a_set_angle_rel(2, -15, 50);
+	vTaskDelay(500 / portTICK_PERIOD_MS);
+	
+	for (int i=0; i<3; i++)
+	{
+		ms12a_set_angle_rel(1, -40, 50);
+		ms12a_set_angle_rel(3, -25, 50);
+		vTaskDelay(200 / portTICK_PERIOD_MS);
+
+		ms12a_set_angle_rel(1, 25, 50);
+		ms12a_set_angle_rel(3, 25, 50);
+		vTaskDelay(200 / portTICK_PERIOD_MS);
+	}
+
+	ms12a_return_to_zero(MS12A_ALL, 0, 15);
 
 	ht16k33_t* seg = &g_ht16k33[0x8];
 

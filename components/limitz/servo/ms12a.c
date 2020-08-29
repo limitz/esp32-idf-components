@@ -25,7 +25,7 @@ inline uint32_t ms12a_load_7bit(uint8_t* data, size_t len)
 	return result;
 }
 
-static int ms12a_write_message(uint8_t dst, uint8_t* message,int len)
+static int ms12a_write_message(uint8_t dst, const uint8_t* message,int len)
 {
 	uint8_t data[MS12A_BUFFER_SIZE];
 	uint8_t hash = 0;
@@ -34,9 +34,9 @@ static int ms12a_write_message(uint8_t dst, uint8_t* message,int len)
 	for (int i=0; i<len; i++) hash += data[2+i] = message[i];
 	data[len+2] = hash & 0x7F;
 	data[len+3] = MS12A_SYSEX_STOP;
+	uart_write_bytes(MS12A_UART_PORT, (const char*) data, len+4);
 	return ESP_OK;
 }
-
 #define _write(dst, message) \
 	ms12a_write_message(dst, (uint8_t*) message, sizeof(message))
 
@@ -70,11 +70,11 @@ int ms12a_set_angle_abs(uint8_t servo, int32_t angle, uint16_t speed)
 {
 	uint8_t message[] = { MS12A_SERVO, MS12A_CMD_SET_ANGLE_ABS_LONG, 
 				PLACEHOLDER_I32, // angle
-				PLACEHOLDER_U16, // speed
+				PLACEHOLDER_U14, // speed
 	};
 
 	_store7(message, 2, +5, angle);
-	_store7(message, 7, +3, speed);
+	_store7(message, 7, +2, speed);
 	return _write(servo, message);
 }
 
@@ -82,11 +82,11 @@ int ms12a_set_angle_rel(uint8_t servo, int32_t angle, uint16_t speed)
 {
 	uint8_t message[] = { MS12A_SERVO, MS12A_CMD_SET_ANGLE_REL_LONG,
 				PLACEHOLDER_I32, // angle
-				PLACEHOLDER_U16, // speed
+				PLACEHOLDER_U14, // speed
 	};
 
 	_store7(message, 2, +5, angle);
-	_store7(message, 7, +3, speed);
+	_store7(message, 7, +2, speed);
 	return _write(servo, message);
 }
 
@@ -129,10 +129,10 @@ int ms12a_handshake(uint8_t servo)
 int ms12a_set_pwm(uint8_t servo, uint14_t pwm)
 {
 	uint8_t message[] = { MS12A_SERVO, MS12A_CMD_SET_PWM,
-				PLACEHOLDER_U14, // pwm
+				PLACEHOLDER_U16, // pwm
 	};
 
-	_store7(message, 2, +2, pwm);
+	_store7(message, 2, +3, pwm);
 	return _write(servo, message);
 }
 
@@ -140,11 +140,11 @@ int ms12a_return_to_zero(uint8_t servo, uint7_t mode, uint16_t speed)
 {
 	uint8_t message[]= { MS12A_SERVO, MS12A_CMD_RETURN_TO_ZERO,
 				PLACEHOLDER_U7,  // mode
-				PLACEHOLDER_U16, // speed
+				PLACEHOLDER_U14, // speed
 	};
 
 	_store7(message, 2, +1, mode);
-	_store7(message, 3, +3, speed);
+	_store7(message, 3, +2, speed);
 	return _write(servo, message);
 }
 
@@ -206,18 +206,100 @@ int ms12a_report_when_position(uint8_t servo, int32_t position)
 	return ESP_FAIL;
 }
 
-int ms12a_set_position_abs(uint8_t servo, int32_t position)
+int ms12a_set_position_abs(uint8_t servo, int32_t position, uint14_t speed)
 {
 	return ESP_FAIL;
 }
 
-int ms12a_set_position_rel(uint8_t servo, int32_t position)
+int ms12a_set_position_rel(uint8_t servo, int32_t position, uint14_t speed)
 {
-	return ESP_FAIL;
+	uint8_t message[] = { MS12A_SERVO, MS12A_CMD_SET_POSITION_REL,
+				PLACEHOLDER_I32, // angle
+				PLACEHOLDER_U16, // speed
+	};
+
+	_store7(message, 2, +5, position);
+	_store7(message, 7, +3, speed);
+	return _write(servo, message);
+	//return ESP_FAIL;
+}
+
+
+static void ms12a_rx_task(void* param)
+{
+	ms12a_t* self = (ms12a_t*) param;
+	uart_event_t event;
+
+	for (;;)
+	{
+		ESP_LOGE(__func__, "waiting for event");
+		if(xQueueReceive(self->queue, &event, (portTickType) portMAX_DELAY)) 
+		{
+			ESP_LOGI(__func__, "got event");
+			switch (event.type)
+			{
+				case UART_DATA:
+					ESP_LOGI(__func__, "[UART DATA]: %d", event.size);
+				        uart_read_bytes(MS12A_UART_PORT, 
+							self->rx_buffer, event.size, 
+							portMAX_DELAY);
+					ESP_LOG_BUFFER_HEX(__func__, self->rx_buffer, event.size);
+					break;
+				case UART_FIFO_OVF:
+					ESP_LOGE(__func__, "UART FIFO OVF");
+					uart_flush_input(MS12A_UART_PORT);
+					xQueueReset(self->queue);
+					break;
+				case UART_BUFFER_FULL:
+					ESP_LOGE(__func__, " UART_BUFFER FULL");
+					uart_flush_input(MS12A_UART_PORT);
+					xQueueReset(self->queue);
+					break;
+				case UART_BREAK:
+					ESP_LOGW(__func__, "UART BREAK");
+					break;
+				case UART_PARITY_ERR:
+				case UART_FRAME_ERR:
+				case UART_PATTERN_DET:
+				default:
+					ESP_LOGW(__func__, "Unhandled event %d of size %d", 
+							event.type, event.size);
+					break;
+			}
+		}
+	}
 }
 
 int ms12a_init(ms12a_t* self)
 {
+	uart_config_t cfg = {
+		.baud_rate = MS12A_UART_BAUD_RATE,
+		.data_bits = UART_DATA_8_BITS,
+		.parity = UART_PARITY_DISABLE,
+		.stop_bits = UART_STOP_BITS_1,
+		.flow_ctrl = UART_HW_FLOWCTRL_DISABLE,
+	};
+
+	ESP_ERROR_CHECK(uart_param_config(MS12A_UART_PORT,&cfg));
+
+	ESP_ERROR_CHECK(uart_set_pin(MS12A_UART_PORT, 
+				MS12A_UART_PIN_TX, 
+				MS12A_UART_PIN_RX, 
+				UART_PIN_NO_CHANGE,
+				UART_PIN_NO_CHANGE));
+
+	ESP_ERROR_CHECK(uart_driver_install(MS12A_UART_PORT, 
+				MS12A_RX_BUFFER_SIZE,
+				0, //MS12A_RX_BUFFER_SIZE, 
+				20, &self->queue, 0));
+	
+	xTaskCreate(ms12a_rx_task, "ms12a uart event",2048, self, 12, &self->task);
+	
+	vTaskDelay(50 / portTICK_PERIOD_MS);
+	ms12a_assign_ids();
+	vTaskDelay(500 / portTICK_PERIOD_MS);
+	
+
 	return ESP_OK;
 }
 
@@ -245,7 +327,9 @@ int ms12a_test_7bit()
 	return ESP_OK;
 }
 
-int ms12a_deinit()
+int ms12a_deinit(ms12a_t* self)
 {
+	vTaskDelete(self->task);
+	uart_driver_delete(MS12A_UART_PORT);
 	return ESP_OK;
 }
