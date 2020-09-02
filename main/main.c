@@ -107,8 +107,12 @@ void app_main()
 
 //	ms12a_get_voltage(MS12A_ALL);
 	ms12a_set_angle_tare(MS12A_ALL);
+	vTaskDelay(1000 / portTICK_PERIOD_MS);
+
 	ms12a_set_angle_rel(3, -135, 20);
+	vTaskDelay(10/ portTICK_PERIOD_MS);
 	ms12a_set_angle_rel(2, -45, 10);
+	vTaskDelay(10 / portTICK_PERIOD_MS);
 	ms12a_set_angle_rel(1, 90, 20);
 
 	vTaskDelay(2000 / portTICK_PERIOD_MS);
@@ -121,11 +125,11 @@ void app_main()
 	{
 		ms12a_set_angle_rel(1, -40, 50);
 		ms12a_set_angle_rel(3, -25, 50);
-		vTaskDelay(200 / portTICK_PERIOD_MS);
+		vTaskDelay(300 / portTICK_PERIOD_MS);
 
 		ms12a_set_angle_rel(1, 25, 50);
 		ms12a_set_angle_rel(3, 25, 50);
-		vTaskDelay(200 / portTICK_PERIOD_MS);
+		vTaskDelay(300 / portTICK_PERIOD_MS);
 	}
 
 	ms12a_return_to_zero(MS12A_ALL, 0, 15);
