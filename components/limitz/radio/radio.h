@@ -15,13 +15,11 @@
 #include <esp_system.h>
 #include <esp_log.h>
 #include <esp_event.h>
-//#include <esp_netif.h>
 #include <tcpip_adapter.h>
 #include <esp_wifi.h>
 
 #include <esp_now.h>
 #include <esp32/rom/crc.h>
-
 
 #define RADIO_BROADCAST_ADDRESS { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF }
 
@@ -37,12 +35,14 @@
 
 #define RADIO_KEY_SIZE ESP_NOW_KEY_LEN
 #define RADIO_QUEUE_SIZE 6
+
 #define RADIO_PACKET_SIZE sizeof(radio_packet_t)
 
 #define MSG_PAYLOAD(type, size) "RADIO: Configured payload size of " \
 				#size \
 				" insufficient for type " \
 				#type
+
 #define MSG_KEYSIZE(size) "RADIO: PMK key size must be " #size
 
 _Static_assert(sizeof(RADIO_PACKET_PAYLOAD_TYPE) <= CONFIG_LMTZ_RADIO_PACKET_PAYLOAD_SIZE,
@@ -77,6 +77,7 @@ typedef struct
 {
 	macaddr_t addr;
 	char name[16];
+
 } __attribute__((packed)) radio_identity_t;
 
 typedef struct
@@ -105,7 +106,9 @@ typedef struct
 	{
 		int (*accept)(const radio_identity_t* identity);
 		int (*receive)(const radio_packet_t* packet);
-	} callbacks;
+	} 
+	callbacks;
+
 } radio_t;
 
 int radio_init(radio_t* self);

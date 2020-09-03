@@ -1,0 +1,7 @@
+menu "LIMITZ Audio"
+		config LMTZ_AUDIO_PMK
+		string "Primary master key (must be 16 chars long)"
+		default "LMTZPMK_01234567"
+
+endmenu
+

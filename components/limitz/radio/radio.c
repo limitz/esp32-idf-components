@@ -1,8 +1,6 @@
 #include <radio.h>
 #include <unique_id.h>
 
-#define TAG "RADIO"
-
 QueueHandle_t s_radio_queue = 0;
 
 static void radio_recv_cb(const uint8_t* addr, const uint8_t* data, int len)
