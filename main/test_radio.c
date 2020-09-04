@@ -20,6 +20,12 @@ enum
 	LIGHT_CUSTOM = 0x80,
 };
 
+
+enum 
+{
+	ACTION_HONK = 0x01
+};
+
 enum
 {
 	ROLE_DISCOVERING,
@@ -48,6 +54,50 @@ typedef struct
 #include <adc.h>
 
 #define GPIO_RECEIVER_SELECT_PIN 23
+
+#define GPIO_INDICATOR_LEFT 	21
+#define GPIO_INDICATOR_RIGHT 	22
+#define GPIO_RED                17
+#define GPIO_GREEN		15
+#define GPIO_BLUE		13
+#define GPIO_STICK		27
+
+static radio_packet_t packet = { 0 };
+static radio_packet_t discovery = {0};
+
+QueueHandle_t gpio_event_queue;
+
+static void IRAM_ATTR gpio_isr_handler(void* arg)
+{
+	uint32_t gpio = (uint32_t)arg;
+	xQueueSendFromISR(gpio_event_queue, &gpio, NULL);
+}
+
+static void gpio_task(void* arg)
+{
+	uint32_t gpio;
+	for (;;)
+	{
+		if (xQueueReceive(gpio_event_queue, &gpio, portMAX_DELAY))
+		{
+			int level = gpio_get_level(gpio);
+			ESP_LOGI(__func__, "GPIO %d %d", gpio,level);
+		
+			if (gpio == GPIO_STICK)
+			{
+				if (!level)
+				{
+					ESP_LOGE(__func__, "HONK!");
+					packet.payload.actions = ACTION_HONK;
+				}
+				else
+				{
+					packet.payload.actions = 0;
+				}
+			}
+		}
+	}
+}
 
 static macaddr_t peer;
 static int role = ROLE_DISCOVERING;
@@ -81,6 +131,7 @@ int on_accept(const radio_identity_t* identity)
 	peer = identity->addr;
 	role = is_receiver() ? ROLE_RECEIVER : ROLE_TRANSMITTER;
 
+	ESP_LOGW(__func__, "ACCEPTING %s", identity->name);
 	switch (role)
 	{
 	case ROLE_RECEIVER:
@@ -91,6 +142,32 @@ int on_accept(const radio_identity_t* identity)
 	case ROLE_TRANSMITTER:
 		adc_init(&joystick.x);
 		adc_init(&joystick.y);
+		
+		//buttons
+		gpio_config_t config = {
+			.intr_type = GPIO_PIN_INTR_ANYEDGE,
+			.mode = GPIO_MODE_INPUT,
+			.pin_bit_mask = (1 << GPIO_INDICATOR_LEFT) |
+					(1 << GPIO_INDICATOR_RIGHT) |
+					(1 << GPIO_RED) |
+					(1 << GPIO_BLUE) |
+					(1 << GPIO_GREEN) |
+					(1 << GPIO_STICK),
+			.pull_up_en = 1,
+		};
+
+		gpio_config(&config);
+		gpio_event_queue = xQueueCreate(12, sizeof(uint32_t));
+		xTaskCreate(gpio_task, "GPIO", 3072, NULL, 10, NULL);
+		gpio_install_isr_service(0);
+		gpio_isr_handler_add(GPIO_INDICATOR_LEFT, gpio_isr_handler, (void*) GPIO_INDICATOR_LEFT);
+		gpio_isr_handler_add(GPIO_INDICATOR_RIGHT, gpio_isr_handler, (void*) GPIO_INDICATOR_RIGHT);
+		gpio_isr_handler_add(GPIO_RED,   gpio_isr_handler, (void*) GPIO_RED);
+		gpio_isr_handler_add(GPIO_BLUE,  gpio_isr_handler, (void*) GPIO_BLUE);
+		gpio_isr_handler_add(GPIO_GREEN, gpio_isr_handler, (void*) GPIO_GREEN);
+		gpio_isr_handler_add(GPIO_STICK, gpio_isr_handler, (void*) GPIO_STICK);
+
+		
 		break;
 	}
 
@@ -100,11 +177,18 @@ int on_accept(const radio_identity_t* identity)
 
 int on_receive(const radio_packet_t* packet)
 {
+	static int timeout = 0;
+
 	if (role == ROLE_RECEIVER)
 	{
 		//packet->payload.lights, 
 		servo_set(&servo_steering, packet->payload.steering);
 		servo_set(&servo_throttle, packet->payload.throttle);
+	
+		if (packet->payload.actions & ACTION_HONK) 
+		{
+			//honk();
+		}
 	}
 	return RADIO_OK;
 }
@@ -113,8 +197,6 @@ int on_receive(const radio_packet_t* packet)
 void app_main()
 {
 	ESP_ERROR_CHECK( nvs_flash_init() );
-
-	static radio_packet_t packet = { 0 };
 	static radio_t radio = 
 	{ 
 		.callbacks = {
@@ -127,24 +209,26 @@ void app_main()
 
 	for (int i = 0; 1; i++)
 	{
-		if (0 == (i & 0x0F))
+		if (0 == (i & 0xFF))
 		{
 			packet.flag = RADIO_PACKET_FLAG_BROADCAST;
 			packet.type = RADIO_PACKET_TYPE_IDENTITY;
 			packet.identity = radio.identity;
+			//packet.payload.actions = 0;
 			radio_send(&radio, &packet);
 		}
 
 		if (role == ROLE_TRANSMITTER)
 		{
-			ESP_LOGI(__func__, "SENDING PACKET");
+			//ESP_LOGI(__func__, "SENDING PACKET");
 
 			adc_update(&joystick.x);
 			adc_update(&joystick.y);
 
-			int send_steering = ((joystick.x.result - 1880) / 13) * 10;
-			int send_throttle = ((joystick.y.result - 1880) / 13) * 10;
+			int send_steering = ((1660 - joystick.x.result) / 17) * 10;
+			int send_throttle = ((joystick.y.result - 1660) / 17) * 10;
 
+			//ESP_LOGI(__func__, "T: %6d S: %6d", send_throttle, send_steering);
 			packet.flag = RADIO_PACKET_FLAG_READY;
 			packet.type = RADIO_PACKET_TYPE_DATA;
 			packet.addr = peer;
@@ -152,6 +236,7 @@ void app_main()
 			packet.payload.throttle = send_throttle;
 			packet.payload.steering = send_steering;
 			radio_send(&radio, &packet);
+			//packet.payload.actions = 0;
 		}
 		vTaskDelay(2);
 	}

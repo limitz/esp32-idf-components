@@ -72,6 +72,7 @@ static void audio_play_task(void* param)//audio_driver_t* driver)
 		ESP_LOGI(__func__, "WRITTEN %d", oav);
 		written += iav;
 	}
+//	i2s_driver_uninstall(driver->num);
 	vTaskDelay(100 / portTICK_PERIOD_MS);
 	vTaskDelete(NULL);
 }

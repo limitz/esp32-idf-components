@@ -21,7 +21,7 @@ static void radio_recv_cb(const uint8_t* addr, const uint8_t* data, int len)
 	//}
 
 	
-	xQueueSendToFront(s_radio_queue, packet, 1);
+	xQueueSend(s_radio_queue, packet, 1);
 }
 
 static void radio_task(void* param)
@@ -105,8 +105,7 @@ int radio_init(radio_t* self)
 	};
 	ESP_ERROR_CHECK( esp_now_add_peer(&broadcast) );
 
-	xTaskCreate(radio_task, "radio task", 2048, self, 4, NULL);
-
+	xTaskCreate(radio_task, "radio task", 4096, self, 4, NULL);
 return ESP_OK;
 }
 
