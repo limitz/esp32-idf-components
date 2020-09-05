@@ -58,6 +58,10 @@ menu "LIMITZ I2C"
 		choice LMTZ_I2C_BUS1_FREQ_SELECT	
 		depends on LMTZ_I2C_BUS1_EN
 		prompt "Frequency"
+
+			config  LMTZ_I2C_BUS1_FREQ_01
+			bool "100 Khz"
+			
 			config  LMTZ_I2C_BUS1_FREQ_1
 			bool "1 Mhz"
 
@@ -75,6 +79,7 @@ menu "LIMITZ I2C"
 		config LMTZ_I2C_BUS1_FREQ
 		depends on LMTZ_I2C_BUS1_EN
 		int
+		default 100000   if LMTZ_I2C_BUS1_FREQ_01
 		default 1000000  if LMTZ_I2C_BUS1_FREQ_1
 		default 5000000  if LMTZ_I2C_BUS1_FREQ_5
 		default 10000000 if LMTZ_I2C_BUS1_FREQ_10

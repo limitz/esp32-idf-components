@@ -139,7 +139,7 @@ int i2c_recv_data(i2cdev_t* dev, int reg, void* data, int len)
 		if (ESP_OK != err) return err; // delete and stop
 	}
 
-	err = i2c_master_read_byte(cmd, (uint8_t*) data+len-1, 0x01);
+	err = i2c_master_read_byte(cmd, ((uint8_t*) data)+len-1, 0x01);
 	if (ESP_OK != err) return err;
 	
 	err = i2c_master_stop(cmd);
