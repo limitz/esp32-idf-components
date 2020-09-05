@@ -298,7 +298,7 @@ int ht16k33_update(ht16k33_t* self)
 	
 	str[0] = 0x00;
 	ESP_LOG_BUFFER_HEX(__func__, str, ofs);
-	i2c_send_data(&self->device, str, ofs);
+	i2c_send_data(&self->device, -1, str, ofs);
 	
 	return ESP_OK;
 }

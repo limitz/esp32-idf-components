@@ -61,24 +61,26 @@ int i2c_init();
 int i2c_deinit();
 
 int i2c_send_cmd(i2cdev_t* dev, uint8_t cmd);
-int i2c_send_data(i2cdev_t* dev, const void* data, int len);
+int i2c_send_data(i2cdev_t* dev, int reg, const void* data, int len);
 int i2c_send_u8(i2cdev_t* dev, uint8_t reg, uint8_t value);
 int i2c_send_u16(i2cdev_t* dev, uint8_t reg, uint16_t value);
 int i2c_send_u32(i2cdev_t* dev, uint8_t reg, uint32_t value);
 
-int i2c_recv_data(i2cdev_t* dev, void* data, int* len);
+int i2c_recv_data(i2cdev_t* dev, int reg, void* data, int len);
 int i2c_recv_u8(i2cdev_t* dev, uint8_t reg, uint8_t* value);
 int i2c_recv_u16(i2cdev_t* dev, uint8_t reg, uint16_t* value);
 int i2c_recv_u32(i2cdev_t* dev, uint8_t reg, uint32_t* value);
 
-/*
-   i2c_init();
 
-   i2cdevice_t dev = { .bus = 1, .address= 0x40 };
+#define i2c_read i2c_recv_data
+#define i2c_read8 i2c_recv_u8
+#define i2c_read16 i2c_recv_u16
+#define i2c_read32 i2c_recv_u32
 
-   uint32_t val_u32;
-   i2c_send_u16(&dev, 0x01, 0xEDD);
-   i2c_recv_u32(&dev, 0x02, &val_u32);
+#define i2c_write i2c_send_data
+#define i2c_write0 i2c_send_cmd
+#define i2c_write8 i2c_send_u8
+#define i2c_write16 i2c_send_u16
+#define i2c_write32 i2c_send_u32
 
-   i2c_deinit();
-*/
+

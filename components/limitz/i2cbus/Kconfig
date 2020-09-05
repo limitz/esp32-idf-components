@@ -1,19 +1,18 @@
 menu "LIMITZ I2C"
 
-
 	config LMTZ_I2C_BUS0_EN
 	bool "Enable i2c bus 0"
 
 		config LMTZ_I2C_BUS0_SDA
 		depends on LMTZ_I2C_BUS0_EN
 		int "SDA Pin number" 
-		range 0 31
+		range 0 36
 		default 21
 	
 		config LMTZ_I2C_BUS0_SCL
 		depends on LMTZ_I2C_BUS0_EN
 		int "SCL Pin number"
-		range 0 31
+		range 0 36
 		default 22
 	
 		choice LMTZ_I2C_BUS0_FREQ_SELECT	
@@ -47,13 +46,13 @@ menu "LIMITZ I2C"
 		config LMTZ_I2C_BUS1_SDA
 		depends on LMTZ_I2C_BUS1_EN
 		int "SDA Pin number" 
-		range 0 31
+		range 0 36
 		default 26
 	
 		config LMTZ_I2C_BUS1_SCL
 		depends on LMTZ_I2C_BUS1_EN
 		int "SCL Pin number"
-		range 0 31
+		range 0 36
 		default 27
 	
 		choice LMTZ_I2C_BUS1_FREQ_SELECT	
@@ -83,7 +82,34 @@ menu "LIMITZ I2C"
 
 		menu "Attached peripherals"
 		depends on LMTZ_I2C_BUS1_EN
-			
+		
+			menuconfig LMTZ_I2C_FT5206_EN
+			bool "Enable FT5206 @0x38"
+			default n
+
+				config LMTZ_I2C_FT5206_THRESHOLD_TOUCH
+				depends on LMTZ_I2C_FT5206_EN
+				int "Touch threshold value"
+				range 0 255
+				default 10
+
+			menuconfig LMTZ_I2C_MPR121_EN
+			bool "Enable MPR121 @0x5A"
+			default n
+
+				config LMTZ_I2C_MPR121_THRESHOLD_TOUCH
+				depends on LMTZ_I2C_MPR121_EN
+				int "Touch threshold value"
+				range 0 16
+				default 12
+
+				config LMTZ_I2C_MPR121_THRESHOLD_RELEASE
+				depends on LMTZ_I2C_MPR121_EN
+				int "Release threshold value"
+				range 0 16
+				default 6
+
+
 			choice LMTZ_I2C_HT16K33_B10_TYPE
 			default LMTZ_I2C_BUS1_HT16K33_0x70_DIS
 			prompt "HT16K33 @0x70"
