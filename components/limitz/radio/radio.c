@@ -26,17 +26,17 @@ static void radio_recv_cb(const uint8_t* addr, const uint8_t* data, int len)
 
 static void radio_task(void* param)
 {
-	radio_t* radio = (radio_t*) param;
+	radio_t* self = (radio_t*) param;
 	radio_packet_t packet;
 	
-	while (pdTRUE == xQueueReceive(s_radio_queue, &packet, portMAX_DELAY))
+	while (pdTRUE == xQueueReceive(self->queue, &packet, portMAX_DELAY))
 	{
 		switch (packet.type)
 		{
 			case RADIO_PACKET_TYPE_IDENTITY:
-				if ( radio->callbacks.accept
+				if ( self->callbacks.on_accept
 				  && !esp_now_peer_exists(packet.identity.addr.ptr)
-				  && RADIO_ACCEPT == radio->callbacks.accept(&packet.identity))
+				  && RADIO_ACCEPT == self->callbacks.on_accept(self, &packet.identity))
 				{
 					esp_now_peer_info_t peer = {
 						.channel = CONFIG_LMTZ_RADIO_CHANNEL,
@@ -50,7 +50,7 @@ static void radio_task(void* param)
 				break;
 
 			case RADIO_PACKET_TYPE_DATA:
-				if (radio->callbacks.receive) radio->callbacks.receive(&packet);
+				if (self->callbacks.on_receive) self->callbacks.on_receive(self, &packet);
 				break;
 		}
 	}
@@ -87,10 +87,10 @@ int radio_init(radio_t* self)
 		strcpy(self->identity.name, unique_id());
 		self->identity.addr =  macaddr();
 	}
-	if (0 == s_radio_queue)
+	if (0 == self->queue)
 	{
-		s_radio_queue = xQueueCreate(RADIO_QUEUE_SIZE,  RADIO_PACKET_SIZE);
-		assert(s_radio_queue);
+		s_radio_queue = self->queue = xQueueCreate(RADIO_QUEUE_SIZE,  RADIO_PACKET_SIZE);
+		assert(self->queue);
 	}
 
 	ESP_ERROR_CHECK( esp_now_init());
@@ -136,7 +136,7 @@ int radio_send(radio_t* radio, radio_packet_t* packet)
 	return ESP_OK;
 }
 
-int radio_destroy(radio_t* self)
+int radio_deinit(radio_t* self)
 {
 	vSemaphoreDelete(s_radio_queue);
 	s_radio_queue = 0;

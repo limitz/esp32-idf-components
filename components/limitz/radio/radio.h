@@ -76,7 +76,7 @@ enum
 typedef struct
 {
 	macaddr_t addr;
-	char name[16];
+	char name[24];
 
 } __attribute__((packed)) radio_identity_t;
 
@@ -87,30 +87,29 @@ typedef struct
 	uint8_t flag;
 	uint16_t seq;
 	uint16_t crc;
-	
-	union 
-	{
-		uint8_t data[CONFIG_LMTZ_RADIO_PACKET_PAYLOAD_SIZE];
-		RADIO_PACKET_PAYLOAD_TYPE payload;
-		radio_identity_t identity;
-	};
 
+	union {
+		radio_identity_t identity;
+		RADIO_PACKET_PAYLOAD_TYPE payload;
+	};
 } __attribute__((packed)) radio_packet_t;
 
-typedef struct
+typedef struct _radio_t
 {
 	radio_identity_t identity;
 	macaddr_t broadcast_addr;
 
 	struct
 	{
-		int (*accept)(const radio_identity_t* identity);
-		int (*receive)(const radio_packet_t* packet);
+		int (*on_accept)(struct _radio_t* radio, const radio_identity_t* identity);
+		int (*on_receive)(struct _radio_t* radio, const radio_packet_t* packet);
 	} 
 	callbacks;
 
+	QueueHandle_t queue;
+	void* context;
 } radio_t;
 
 int radio_init(radio_t* self);
 int radio_send(radio_t* self, radio_packet_t* packet);
-int radio_destroy(radio_t* self);
+int radio_deinit(radio_t* self);

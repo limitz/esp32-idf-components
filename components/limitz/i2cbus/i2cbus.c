@@ -74,20 +74,38 @@ int i2c_send_data(i2cdev_t* dev, int reg, const void* data, int len)
 	i2c_cmd_handle_t cmd = i2c_cmd_link_create();
 	
 	err = i2c_master_start(cmd);
-	if (ESP_OK != err) return err; //delete cmd
+	if (ESP_OK != err) 
+	{
+		i2c_reset_tx_fifo(dev->bus);
+		i2c_cmd_link_delete(cmd);
+		return err; //delete cmd
+	}
 
 	err = i2c_master_write_byte(cmd, (dev->addr << 1) | I2C_MASTER_WRITE, 0x01);
-	if (ESP_OK != err) return err; // delete and stop
-
+	if (ESP_OK != err)
+	{
+		i2c_reset_tx_fifo(dev->bus);
+		i2c_cmd_link_delete(cmd);
+		return err; // delete and stop
+	}
 	if (reg >= 0)
 	{
 		err = i2c_master_write_byte(cmd, reg, 0x01);
-		if (ESP_OK != err) return err; // delete and stop?
+		if (ESP_OK != err) 
+		{
+			i2c_reset_tx_fifo(dev->bus);
+			i2c_cmd_link_delete(cmd);
+			return err; // delete and stop?
+		}
 	}
 
 	err = i2c_master_write(cmd, (uint8_t*) data, len, 0x01);
-	if (ESP_OK != err) return err; // delete and stop
-	
+	if (ESP_OK != err) 
+	{
+		i2c_reset_tx_fifo(dev->bus);
+		i2c_cmd_link_delete(cmd);
+		return err; // delete and stop
+	}
 	/*
 	const uint8_t* ptr = (const uint8_t*) data;
 	while (len-- > 0)
@@ -98,9 +116,15 @@ int i2c_send_data(i2cdev_t* dev, int reg, const void* data, int len)
 	}
 	*/
 	err = i2c_master_stop(cmd);
-	if (ESP_OK != err) return err; // delete
+	if (ESP_OK != err) 
+	{
+		i2c_reset_tx_fifo(dev->bus);
+		i2c_cmd_link_delete(cmd);
+		return err; // delete
+	}
 
 	i2c_master_cmd_begin(dev->bus, cmd, 1000 / portTICK_RATE_MS);
+	i2c_cmd_link_delete(cmd);
 	return err;
 }
 
@@ -116,36 +140,70 @@ int i2c_recv_data(i2cdev_t* dev, int reg, void* data, int len)
 	i2c_cmd_handle_t cmd = i2c_cmd_link_create();
 	
 	err = i2c_master_start(cmd);
-	if (ESP_OK != err) return err; //delete cmd
+	if (ESP_OK != err) {
+		i2c_reset_rx_fifo(dev->bus);
+		i2c_cmd_link_delete(cmd);
+		return err; //delete cmd
+	}
 
 	if (reg >= 0)
 	{
 		err = i2c_master_write_byte(cmd, (dev->addr << 1) | I2C_MASTER_WRITE, 0x01);
-		if (ESP_OK != err) return err; // delete and stop
+		if (ESP_OK != err) {
+			i2c_reset_rx_fifo(dev->bus);
+			i2c_cmd_link_delete(cmd);
+			return err; //delete cmd
+		}
 
 		err = i2c_master_write_byte(cmd, reg, 0x01);
-		if (ESP_OK != err) return err; // delete and stop?
+		if (ESP_OK != err) {
+			i2c_reset_rx_fifo(dev->bus);
+			i2c_cmd_link_delete(cmd);
+			return err; //delete cmd
+		}
 	
 		err = i2c_master_start(cmd);
-		if (ESP_OK != err) return err; // delete
+		if (ESP_OK != err) {
+			i2c_reset_rx_fifo(dev->bus);
+			i2c_cmd_link_delete(cmd);
+			return err; //delete cmd
+		}	
 	}
 
 	err = i2c_master_write_byte(cmd, (dev->addr << 1) | I2C_MASTER_READ, 0x01);
-	if (ESP_OK != err) return err; // delete and stop
+	if (ESP_OK != err) {
+		i2c_reset_rx_fifo(dev->bus);
+		i2c_cmd_link_delete(cmd);
+		return err; //delete cmd
+	}
 	
 	if (len > 1)
 	{
 		err = i2c_master_read(cmd, (uint8_t*) data, len-1, 0x00);
-		if (ESP_OK != err) return err; // delete and stop
+		if (ESP_OK != err) {
+			i2c_reset_rx_fifo(dev->bus);
+			i2c_cmd_link_delete(cmd);
+			return err; //delete cmd
+		}
 	}
 
 	err = i2c_master_read_byte(cmd, ((uint8_t*) data)+len-1, 0x01);
-	if (ESP_OK != err) return err;
+	if (ESP_OK != err) {
+		i2c_reset_rx_fifo(dev->bus);
+		i2c_cmd_link_delete(cmd);
+		return err; //delete cmd
+	}
 	
 	err = i2c_master_stop(cmd);
-	if (ESP_OK != err) return err; // delete
+	if (ESP_OK != err) {
+		i2c_reset_rx_fifo(dev->bus);
+		i2c_cmd_link_delete(cmd);
+		return err; //delete cmd
+	}
 
 	i2c_master_cmd_begin(dev->bus, cmd, 1000 / portTICK_RATE_MS);
+	i2c_cmd_link_delete(cmd);
+
 	return err;
 }
 int i2c_recv_u8(i2cdev_t* dev, uint8_t reg, uint8_t* u8)

@@ -10,34 +10,39 @@
 #include <i2cbus.h>
 #include <ft5206.h>
 #include <bma.h>
+#include "rc.h"
 
 void app_main()
 {
+	RC.role = RC_ROLE_CONTROLLER;
+
 	ESP_ERROR_CHECK( nvs_flash_init() );
+	ESP_ERROR_CHECK( i2c_init() );
+	ESP_ERROR_CHECK( rc_init() );
+	ESP_ERROR_CHECK( ft5206_init() );
 
-	i2c_init();
-
-	ESP_ERROR_CHECK(ft5206_init());
 	ESP_LOGW("FT5206", "VENDOR: %02x CHIP: %02x", 
 			FT5206.info.ctpm_vendor_id, 
 			FT5206.info.chip_vendor_id);
 
-	ESP_LOG_BUFFER_HEX("DUMP", &FT5206, sizeof(FT5206));
-
 	for (;;)
 	{
-		ESP_ERROR_CHECK(ft5206_read_touches());
+		ft5206_read_touches();
 
-		ESP_LOGI("FT5206", "GESTURE: %02X, TOUCHES: %03X", 
-				FT5206.touch.gesture,
-				FT5206.touch.count);
-		
-		for (int i=0 ;i<FT5206.touch.count; i++)
+		if (FT5206.touch.count == 1)
 		{
-			ft5206_touch_t p = FT5206.touch.points[i];
-			ESP_LOGI("FT5206", "x: 0x%03X y: 0x%03X (id = 0x%01X)", p.x, p.y, p.id);
+			ft5206_touch_t p = FT5206.touch.points[0];
+			RC.packets.controls.payload.steering = 1000 * (120-p.x) / 120;
+			RC.packets.controls.payload.throttle = 1000 * (120-p.y) / 120;
+			
 		}
-		vTaskDelay(10);
-	
+		else
+		{
+			RC.packets.controls.payload.steering = 0;
+			RC.packets.controls.payload.throttle = 0;
+		}
+
+		//ESP_LOG_BUFFER_HEX("PAYLOAD", &RC.packets.controls.payload, sizeof(rc_payload_t));
+		vTaskDelay(20 / portTICK_PERIOD_MS);
 	}
 }
