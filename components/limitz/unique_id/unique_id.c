@@ -27,9 +27,9 @@ static int init()
 		if (offset > max) offset = max;
 		
 		memcpy(s_unique + offset, ownaddr.ptr, 6);
-		hex(s_unique+offset+0, (uint8_t)s_unique[3]);
-		hex(s_unique+offset+2, (uint8_t)s_unique[4]);
-		hex(s_unique+offset+4, (uint8_t)s_unique[5]);
+		hex(s_unique+offset+0, (uint8_t)s_unique[offset+3]);
+		hex(s_unique+offset+2, (uint8_t)s_unique[offset+4]);
+		hex(s_unique+offset+4, (uint8_t)s_unique[offset+5]);
 		s_unique[offset+6] = 0;
 	}
 	return ESP_OK;

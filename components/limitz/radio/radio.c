@@ -11,19 +11,17 @@ static radio_packet_t* next_packet()
 	return NULL;
 }*/
 
-static void log_packet(const char* tag, const macaddr_t* to, const radio_packet_t* packet)
-{
-	
-	ESP_LOGI(tag, "Dest: " MACADDR_FMT ", Type: %02x, Length: %d, Offset: %d",
-			MACADDR_ARGS(to), packet->type, packet->length, packet->offset);
-	if (packet->type) ESP_LOG_BUFFER_HEX("SEND", packet->payload, packet->length);
-	else 
-	{
-		ESP_LOGI(tag, "addr: " MACADDR_FMT ", name: %s, features:",
-				MACADDR_ARGS(&packet->identity.addr), 
-				packet->identity.name);
-		ESP_LOG_BUFFER_HEX(tag, packet->identity.features, 8);
-	}
+#define log_packet(logger, tag, to, packet) \
+{ \
+	logger(tag, "Dest: " MACADDR_FMT ", Type: %02x, Length: %d, Offset: %d",\
+			MACADDR_ARGS(to), (packet)->type, (packet)->length, (packet)->offset);\
+	if (!(packet)->type) { \
+		uint8_t* f = (packet)->identity.features; \
+		logger(tag, "addr: " MACADDR_FMT ", name: %s, features: %d %d %d %d %d %d %d %d",\
+				MACADDR_ARGS(&(packet)->identity.addr), \
+				(packet)->identity.name, \
+				f[0], f[1], f[2], f[3], f[4], f[5], f[6], f[7]);\
+	}\
 }
 
 static void radio_recv_cb(const uint8_t* addr, const uint8_t* data, int len)
@@ -42,8 +40,7 @@ static void radio_recv_cb(const uint8_t* addr, const uint8_t* data, int len)
 	radio_packet_t packet;
 
 	//memcpy(packet.identity.addr.ptr, addr, 6);
-	packet.length = len;
-	memcpy(&packet.payload, data, len);
+	memcpy(&packet, data, len);
 	xQueueSend(RADIO.queue, &packet, 1);
 }
 
@@ -53,7 +50,7 @@ static void radio_task(void* param)
 	
 	while (pdTRUE == xQueueReceive(RADIO.queue, &packet, portMAX_DELAY))
 	{
-		log_packet("RECV", &RADIO.identity.addr, &packet);
+		log_packet(ESP_LOGW, "RECV", &RADIO.identity.addr, &packet);
 
 		switch (packet.type)
 		{
@@ -141,7 +138,7 @@ int radio_unicast(const macaddr_t* to, int type, const void* payload, size_t len
 	// TODO if len > MAX, multipart using offset
 	radio_packet_t packet = {
 		.type = type,
-		.length = len,
+		.length = len + 6,
 		.offset = 0,
 	};
 	memcpy(packet.payload, payload, len);
@@ -159,7 +156,7 @@ int radio_send_packet(const macaddr_t* to, const radio_packet_t* packet)
 	//packet->crc = 0;
 	//packet->crc = crc16_le(UINT16_MAX, (const void*) packet, RADIO_PACKET_SIZE);
 
-	log_packet("SEND", to, packet);
+	log_packet(ESP_LOGI, "SEND", to, packet);
 	esp_now_send(to->ptr, (const uint8_t*) packet, packet->length);
 	return ESP_OK;
 }
