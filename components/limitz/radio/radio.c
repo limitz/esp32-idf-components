@@ -1,42 +1,68 @@
 #include <radio.h>
 #include <unique_id.h>
 
-QueueHandle_t s_radio_queue = 0;
+radio_t RADIO =  
+{
+};
+
+/*
+static radio_packet_t* next_packet()
+{
+	return NULL;
+}*/
+
+static void log_packet(const char* tag, const macaddr_t* to, const radio_packet_t* packet)
+{
+	
+	ESP_LOGI(tag, "Dest: " MACADDR_FMT ", Type: %02x, Length: %d, Offset: %d",
+			MACADDR_ARGS(to), packet->type, packet->length, packet->offset);
+	if (packet->type) ESP_LOG_BUFFER_HEX("SEND", packet->payload, packet->length);
+	else 
+	{
+		ESP_LOGI(tag, "addr: " MACADDR_FMT ", name: %s, features:",
+				MACADDR_ARGS(&packet->identity.addr), 
+				packet->identity.name);
+		ESP_LOG_BUFFER_HEX(tag, packet->identity.features, 8);
+	}
+}
 
 static void radio_recv_cb(const uint8_t* addr, const uint8_t* data, int len)
 {
-	radio_packet_t* packet = (radio_packet_t*) data;
-	
-	assert(addr);
-	assert(data);
-	assert(sizeof(radio_packet_t) == len);
+	if (len < sizeof(8)) 
+	{
+		//ESP_LOGE("Unsufficient data");
+		return;
+	}
+	if (len > RADIO_PACKET_MAX_PAYLOAD) 
+	{
+		//ESP_LOGE("Too much data");
+		return;
+	}
 
-	//const uint16_t crca = packet->crc;
-	//packet->crc = 0;
-	//const uint16_t crcb = crc16_le(UINT16_MAX, packet->data, RADIO_PACKET_SIZE);
-	//if (crca != crcb) 
-	//{ 
-	//	ESP_LOGE(TAG, "Corrupt packet"); 
-	//	return; 
-	//}
+	radio_packet_t packet;
 
-	
-	xQueueSend(s_radio_queue, packet, 1);
+	//memcpy(packet.identity.addr.ptr, addr, 6);
+	packet.length = len;
+	memcpy(&packet.payload, data, len);
+	xQueueSend(RADIO.queue, &packet, 1);
 }
 
 static void radio_task(void* param)
 {
-	radio_t* self = (radio_t*) param;
 	radio_packet_t packet;
 	
-	while (pdTRUE == xQueueReceive(self->queue, &packet, portMAX_DELAY))
+	while (pdTRUE == xQueueReceive(RADIO.queue, &packet, portMAX_DELAY))
 	{
+		log_packet("RECV", &RADIO.identity.addr, &packet);
+
 		switch (packet.type)
 		{
 			case RADIO_PACKET_TYPE_IDENTITY:
-				if ( self->callbacks.on_accept
+				if ( RADIO.callbacks.on_accept
 				  && !esp_now_peer_exists(packet.identity.addr.ptr)
-				  && RADIO_ACCEPT == self->callbacks.on_accept(self, &packet.identity))
+				  && RADIO_ACCEPT == RADIO.callbacks.on_accept(&packet))
+				//or just accept
+				//if ( !esp_now_peer_exists(qp.addr.ptr)
 				{
 					esp_now_peer_info_t peer = {
 						.channel = CONFIG_LMTZ_RADIO_CHANNEL,
@@ -50,14 +76,15 @@ static void radio_task(void* param)
 				break;
 
 			case RADIO_PACKET_TYPE_DATA:
-				if (self->callbacks.on_receive) self->callbacks.on_receive(self, &packet);
+				if (RADIO.callbacks.on_receive) 
+					RADIO.callbacks.on_receive(&packet);
 				break;
 		}
 	}
 	ESP_LOGE(__func__, "STOPPED");
 }
 
-int radio_init(radio_t* self)
+int radio_init()
 {
 	//ESP_ERROR_CHECK(esp_netif_init());
 	tcpip_adapter_init();
@@ -80,17 +107,17 @@ int radio_init(radio_t* self)
 	}
 #endif
 
-	self->broadcast_addr = macaddr_parse("FF:FF:FF:FF:FF:FF");
-
-	if (0 == *self->identity.name)
+	// TODO remove unique id dependency
+	if (0 == *RADIO.identity.name)
 	{
-		strcpy(self->identity.name, unique_id());
-		self->identity.addr =  macaddr();
+		strcpy(RADIO.identity.name, unique_id());
+		RADIO.identity.addr =  macaddr();
 	}
-	if (0 == self->queue)
+
+	if (0 == RADIO.queue)
 	{
-		s_radio_queue = self->queue = xQueueCreate(RADIO_QUEUE_SIZE,  RADIO_PACKET_SIZE);
-		assert(self->queue);
+		RADIO.queue = xQueueCreate(RADIO_PACKET_QUEUE_SIZE,  RADIO_PACKET_MAX_PAYLOAD);
+		assert(RADIO.queue);
 	}
 
 	ESP_ERROR_CHECK( esp_now_init());
@@ -105,41 +132,43 @@ int radio_init(radio_t* self)
 	};
 	ESP_ERROR_CHECK( esp_now_add_peer(&broadcast) );
 
-	xTaskCreate(radio_task, "radio task", 4096, self, 4, NULL);
-return ESP_OK;
+	xTaskCreate(radio_task, "radio task", 4096, NULL, 4, &RADIO.task);
+	return ESP_OK;
 }
 
-int radio_send(radio_t* radio, radio_packet_t* packet)
+int radio_unicast(const macaddr_t* to, int type, const void* payload, size_t len)
 {
-	macaddr_t dst, tmp = packet->addr;
-	if (packet->flag & RADIO_PACKET_FLAG_BROADCAST)
-	{
-		dst = radio->broadcast_addr;
-	}
-	else 
-	{
-		dst = packet->addr;
-	}
-	packet->addr = macaddr();
-	packet->seq++;
-	packet->crc = 0;
-	packet->crc = crc16_le(UINT16_MAX, (const void*) packet, RADIO_PACKET_SIZE);
+	// TODO if len > MAX, multipart using offset
+	radio_packet_t packet = {
+		.type = type,
+		.length = len,
+		.offset = 0,
+	};
+	memcpy(packet.payload, payload, len);
+	return radio_send_packet(to, &packet);
+}
 
-	//ESP_LOGW(__func__, "[TYPE:%02X FLAGS:%02X SEQ:%04X CRC:%04X]",
-		//	packet->type, packet->flag, packet->seq, packet->crc );
-	//ESP_LOG_BUFFER_HEX(__func__, dst.ptr, 6);
-	//ESP_LOG_BUFFER_HEX(__func__, &packet->payload, CONFIG_LMTZ_RADIO_PACKET_PAYLOAD_SIZE);
+int radio_broadcast(int type, const void* payload, size_t len)
+{
+	macaddr_t broadcast = { .ptr = RADIO_BROADCAST_ADDRESS };
+	return radio_unicast(&broadcast, type, payload, len);
+}
 
-	esp_now_send(dst.ptr, (const void*) packet, sizeof(radio_packet_t));
-	packet->addr = tmp;
+int radio_send_packet(const macaddr_t* to, const radio_packet_t* packet)
+{
+	//packet->crc = 0;
+	//packet->crc = crc16_le(UINT16_MAX, (const void*) packet, RADIO_PACKET_SIZE);
 
+	log_packet("SEND", to, packet);
+	esp_now_send(to->ptr, (const uint8_t*) packet, packet->length);
 	return ESP_OK;
 }
 
 int radio_deinit(radio_t* self)
 {
-	vSemaphoreDelete(s_radio_queue);
-	s_radio_queue = 0;
+	vTaskDelete(RADIO.task);
+	vSemaphoreDelete(RADIO.queue);
+	RADIO.queue = 0;
 	esp_now_deinit();
 	return ESP_OK;
 }

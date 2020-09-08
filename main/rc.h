@@ -7,6 +7,8 @@
 #include <esp_system.h>
 #include <esp_log.h>
 #include <driver/gpio.h>
+#include <radio.h>
+#include <servo.h>
 
 enum
 {
@@ -45,22 +47,16 @@ typedef struct
 	uint8_t actions;
 	int16_t throttle;	
 	int16_t steering;
+
 } rc_payload_t;
 
-#define RADIO_PACKET_PAYLOAD_TYPE rc_payload_t
-#include <radio.h>
-#include <servo.h>
 
 typedef struct
 {
-	radio_t radio;
-	int role;
-	struct
-	{
-		radio_packet_t controls;
-		radio_packet_t discover;
-	} packets;
+	rc_payload_t payload;
+	radio_identity_t peer;
 
+	int role;
 	int packet_interval;
 	int discover_interval;
 
@@ -72,6 +68,7 @@ typedef struct
 			{
 				servo_t steering;
 				servo_t throttle;
+	
 			} servos;
 
 		} vehicle;

@@ -32,14 +32,14 @@ void app_main()
 		if (FT5206.touch.count == 1)
 		{
 			ft5206_touch_t p = FT5206.touch.points[0];
-			RC.packets.controls.payload.steering = 1000 * (120-p.x) / 120;
-			RC.packets.controls.payload.throttle = 1000 * (120-p.y) / 120;
+			RC.payload.steering = 1000 * (120-p.x) / 120;
+			RC.payload.throttle = 1000 * (120-p.y) / 120;
 			
 		}
 		else
 		{
-			RC.packets.controls.payload.steering = 0;
-			RC.packets.controls.payload.throttle = 0;
+			RC.payload.steering = 0;
+			RC.payload.throttle = 0;
 		}
 
 		//ESP_LOG_BUFFER_HEX("PAYLOAD", &RC.packets.controls.payload, sizeof(rc_payload_t));
