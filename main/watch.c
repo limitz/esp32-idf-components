@@ -15,8 +15,11 @@
 #include <axp202.h>
 #include "rc.h"
 
+#include "xploading.c"
+
 #define LDO_BACKLIGHT AXP202_LDO2
 #define nullptr NULL
+
 void do_wakeup()
 {
 	gui_start(true);
@@ -27,7 +30,7 @@ void do_sleep()
 {
 	axp202_set_output(LDO_BACKLIGHT, AXP202_OFF);
 	gui_stop(true);
-	ESP_ERROR_CHECK(esp_sleep_enable_timer_wakeup(10000000));
+	ESP_ERROR_CHECK(esp_sleep_enable_timer_wakeup(60000000));
 	
 	ESP_LOGE(__func__, "Sleeping");
 	fflush(stdout);
@@ -69,12 +72,20 @@ void app_main()
 
 	static lv_style_t abg;
 	style_init(abg);
+	style_set(abg, border_width, 0); 
 	style_set(abg, border_side, LV_BORDER_SIDE_NONE);
 	style_set(abg, bg_opa, LV_OPA_0);
+
 	style_set(abg, line_width, 8);
 	style_set(abg, line_rounded, true);
 	style_set(abg, line_color, LV_COLOR_MAKE(0x33, 0x00, 0x00));
 
+	static lv_style_t nostyle;
+	style_init(abg);
+	style_set(abg, border_width, 0); 
+	style_set(abg, border_side, LV_BORDER_SIDE_NONE);
+	style_set(abg, bg_opa, LV_OPA_0);
+#if 0
 	lv_obj_t* arc = lv_arc_create(gui_root(), NULL);
 	lv_obj_add_style(arc, LV_ARC_PART_BG, &abg);
 	lv_obj_add_style(arc, LV_ARC_PART_INDIC, &afg);
@@ -82,6 +93,13 @@ void app_main()
 	lv_arc_set_bg_angles(arc, 0, 360);
 	lv_arc_set_angles(arc, 0, 230);
 	lv_obj_align(arc, NULL, LV_ALIGN_CENTER, 0, 0);
+#endif
+
+	lv_obj_t* background = lv_img_create(gui_root(), NULL);
+	lv_obj_add_style(background, LV_IMG_PART_MAIN, &nostyle);
+	lv_obj_set_size(background, 212, 210);
+	lv_img_set_src(background, &xploading);
+	lv_obj_align(background, NULL, LV_ALIGN_CENTER, 0, 0);
 
 	do_wakeup();
 
