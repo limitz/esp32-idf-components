@@ -63,6 +63,8 @@ void app_main()
 {
 	ESP_ERROR_CHECK(_camera_init());
 
+	radio_init();
+
 	for (;;)
 	{
 		ESP_ERROR_CHECK(_camera_capture());

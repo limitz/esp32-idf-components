@@ -1,0 +1,20 @@
+#pragma once
+
+#include <radio_defs.h>
+
+enum
+{
+	RADIO_PROPERTY_MACADDR  = 0x0001,
+	RADIO_PROPERTY_NAME     = 0x0002,
+	RADIO_PROPERTY_ROLE	= 0x0004,
+	RADIO_PROPERTY_PEERLIST = 0x0008,
+	RADIO_PROPERTY_BATTERY  = 0x0008,
+	RADIO_PROPERTY_
+	RADIO_PROPERTY_MOTOR,
+	RADIO_PROPERTY_
+};
+
+typedef struct
+{
+
+} radio_payload_discover;

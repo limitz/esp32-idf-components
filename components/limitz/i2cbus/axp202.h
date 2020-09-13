@@ -1,4 +1,4 @@
-	/////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////
 /*
 MIT License
 
@@ -30,6 +30,45 @@ github:https://github.com/lewisxhe/AXP202X_Libraries
 #pragma once
 
 #include "i2cbus.h"
+// Added to facilitate LMTZ ESP32 component library
+typedef struct
+{
+	i2cdev_t i2c;
+	struct
+	{
+		bool is_connected;
+		int voltage;  //mV
+		int current; //mA
+	} vbus;
+
+	struct
+	{
+		int target_voltage;
+		int charging_current;
+		bool charging_enabled;
+	} settings;
+
+	struct
+	{
+		bool is_connected;
+		bool is_charging;
+		int  percentage; // %
+		int  voltage; 	// mV
+		int  power;    // mW
+		int  current; //mA
+	} battery;
+
+	int temperature;
+} axp202_t;
+
+int axp202_init();
+int axp202_deinit();
+int axp202_set_charge_control_cur(uint16_t mah);
+int axp202_set_output(uint8_t ch, bool en);
+int axp202_set_shutdown_time(uint8_t param);
+int axp202_update();
+
+extern axp202_t AXP202;
 
 
 // #define AXP_DEBUG_PORT  Serial
@@ -560,23 +599,6 @@ typedef enum {
     AXP1XX_CHARGE_CUR_1240MA,
     AXP1XX_CHARGE_CUR_1320MA,
 } axp1xx_charge_current_t;
-
-typedef struct
-{
-	i2cdev_t i2c;
-	uint8_t has_usb_power;
-	uint8_t is_charging;
-	uint16_t batt_percentage;
-} axp202_t;
-
-int axp202_init();
-int axp202_deinit();
-int axp202_set_charge_control_cur(uint16_t mah);
-int axp202_set_output(uint8_t ch, bool en);
-int axp202_set_shutdown_time(uint8_t param);
-int axp202_update();
-
-extern axp202_t AXP202;
 
     // -----------------
 

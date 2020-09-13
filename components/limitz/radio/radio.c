@@ -3,6 +3,7 @@
 
 radio_t RADIO =  
 {
+	.callbacks.on_accept = RADIO_ACCEPT_ANY,
 };
 
 /*
@@ -55,12 +56,11 @@ static void radio_task(void* param)
 		switch (packet.type)
 		{
 			case RADIO_PACKET_TYPE_IDENTITY:
-				if ( RADIO.callbacks.on_accept
-				  && !esp_now_peer_exists(packet.identity.addr.ptr)
-				  && RADIO_ACCEPT == RADIO.callbacks.on_accept(&packet))
-				//or just accept
-				//if ( !esp_now_peer_exists(qp.addr.ptr)
-				{
+				if (RADIO_ACCEPT_ANY == RADIO.callbacks.on_accept
+				|| (RADIO.callbacks.on_accept
+				    && !esp_now_peer_exists(packet.identity.addr.ptr)
+				    && RADIO_ACCEPT == RADIO.callbacks.on_accept(&packet))
+				){
 					esp_now_peer_info_t peer = {
 						.channel = CONFIG_LMTZ_RADIO_CHANNEL,
 						.ifidx = ESPNOW_WIFI_IF,

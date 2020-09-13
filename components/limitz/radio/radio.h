@@ -36,6 +36,10 @@
 #define RADIO_PACKET_MAX_PAYLOAD 64
 #define RADIO_PACKET_QUEUE_SIZE 6
 
+#define RADIO_ACCEPT_ANY ((radio_packet_cb) 0x1)
+#define RADIO_ACCEPT_NONE NULL
+
+
 _Static_assert(strlen(CONFIG_LMTZ_RADIO_PMK) == RADIO_KEY_SIZE, MSG_KEYSIZE(RADIO_KEY_SIZE));
 
 enum 
@@ -70,8 +74,10 @@ typedef struct
 } __attribute__((packed)) 
 radio_identity_t;
 
+struct _radio_packet_t;
+typedef int (*radio_packet_cb)(const struct _radio_packet_t* packet);
 
-typedef struct
+typedef struct _radio_packet_t
 {
 	uint8_t  type;
 	uint8_t  flags;
@@ -94,8 +100,10 @@ typedef struct
 
 	struct
 	{
-		int (*on_accept)(const radio_packet_t* identity);
-		int (*on_receive)(const radio_packet_t* packet);
+		radio_packet_cb on_accept;
+		radio_packet_cb on_receive;
+	//	int (*on_accept)(const radio_packet_t* identity);
+	//	int (*on_receive)(const radio_packet_t* packet);
 	} 
 	callbacks;
 

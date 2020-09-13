@@ -1,0 +1,80 @@
+menu "LIMITZ TMC5160 (SPI)"
+
+	choice LMTZ_TMC5160_MODE
+		prompt "TMC5160 Mode"
+		default LMTZ_TMC5160_MODE_MOTION_CONTROLLER
+
+		config LMTZ_TMC5160_MODE_MOTION_CONTROLLER
+		bool "Motion Controller"
+
+		config LMTZ_TMC5160_MODE_STEP_DIR
+		bool "Step Dir"
+
+		config LMTZ_TMC5160_MODE_BY_GPIO
+		bool "Settable with GPIO"
+
+	endchoice
+	
+	config LMTZ_TMC5160_MODE_CONFIG_PIN
+		depends on LMTZ_TMC5160_MODE_BY_GPIO
+		int "GPIO pin for mode selection"
+		range 0 45
+		default 0
+	
+	config LMTZ_TMC5160_PIN_STEP
+		depends on LMTZ_TMC5160_MODE_STEP_DIR || LMTZ_TMC5160_MODE_BY_GPIO
+		int "Step pin"
+		default 18
+
+	config LMTZ_TMC5160_DIR_STEP
+		depends on LMTZ_TMC5160_MODE_STEP_DIR || LMTZ_TMC5160_MODE_BY_GPIO
+		int "Dir pin"
+		default 19
+	
+	config LMTZ_TMC5160_DAISY_NUM
+		int
+		prompt "Number of TMC5160's (daisy chained if more than 1)"
+		default 1
+	
+	choice LMTZ_TMC5160_SPI
+		prompt "SPI host"
+		default LMTZ_TMC5160_SPI_HSPI
+
+		config LMTZ_TMC5160_SPI_HSPI
+			bool "HSPI"
+		
+		config LMTZ_TMC5160_SPI_VSPI
+			bool "VSPI"
+	endchoice
+
+		
+	config LMTZ_TMC5160_DMA_CHANNEL
+		int
+		prompt "SPI DMA channel" 
+		default 2
+	
+	config LMTZ_TMC5160_CLOCK_SPEED
+		int "SPI Clock speed"
+		default 1000000
+
+	config LMTZ_TMC5160_PIN_MOSI
+		int "SPI MOSI pin"
+		default 13
+
+	config LMTZ_TMC5160_PIN_MISO
+		int "SPI MISO pin"
+		default 12
+
+	config LMTZ_TMC5160_PIN_SCLK
+		int "SPI SCLK pin"
+		default 14
+
+	config LMTZ_TMC5160_PIN_CS
+		int "SPI CS pin"
+		default 15
+
+	config LMTZ_TMC5160_PIN_EN
+		int "Output enable pin"
+		default 17
+
+endmenu

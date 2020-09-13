@@ -103,6 +103,20 @@ static int _getRegistH8L5(uint8_t h8, uint8_t l5)
 }
 	
 
+float axp202_get_vbus_voltage()
+{
+    return _getRegistResult(AXP202_VBUS_VOL_H8, AXP202_VBUS_VOL_L4) * AXP202_VBUS_VOLTAGE_STEP;
+}
+
+float axp202_get_vbus_current()
+{
+    return _getRegistResult(AXP202_VBUS_CUR_H8, AXP202_VBUS_CUR_L4) * AXP202_VBUS_CUR_STEP;
+}
+
+int axp202_get_temp()
+{
+    return _getRegistResult(AXP202_INTERNAL_TEMP_H8, AXP202_INTERNAL_TEMP_L4) * AXP202_INTERNAL_TEMP_STEP;
+}
 
 uint8_t axp202_get_adc_sampling_rate()
 {
@@ -167,70 +181,30 @@ int axp202_set_output(uint8_t ch, bool en)
     }
     return AXP_FAIL;
 }
-/*
-static bool axp202_is_charging()
-{
-    uint8_t reg;
-    _readByte(AXP202_MODE_CHGSTATUS, 1, &reg);
-    return IS_OPEN(reg, 6);
-}
-
-static bool axp202_is_batt_connected()
-{
-    uint8_t reg;
-    _readByte(AXP202_MODE_CHGSTATUS, 1, &reg);
-    return IS_OPEN(reg, 5);
-}
-*/
-
-float axp202_get_acin_voltage()
-{
-    return _getRegistResult(AXP202_ACIN_VOL_H8, AXP202_ACIN_VOL_L4) * AXP202_ACIN_VOLTAGE_STEP;
-}
-
-float axp202_get_acin_current()
-{
-    return _getRegistResult(AXP202_ACIN_CUR_H8, AXP202_ACIN_CUR_L4) * AXP202_ACIN_CUR_STEP;
-}
-
-float axp202_get_vbus_voltage()
-{
-    return _getRegistResult(AXP202_VBUS_VOL_H8, AXP202_VBUS_VOL_L4) * AXP202_VBUS_VOLTAGE_STEP;
-}
-
-float axp202_get_vbus_current()
-{
-    return _getRegistResult(AXP202_VBUS_CUR_H8, AXP202_VBUS_CUR_L4) * AXP202_VBUS_CUR_STEP;
-}
-
-float axp202_get_temp()
-{
-    return _getRegistResult(AXP202_INTERNAL_TEMP_H8, AXP202_INTERNAL_TEMP_L4) * AXP202_INTERNAL_TEMP_STEP;
-}
 
 /*
 Note: the battery power formula:
 Pbat =2* register value * Voltage LSB * Current LSB / 1000.
 (Voltage LSB is 1.1mV; Current LSB is 0.5mA, and unit of calculation result is mW.)
 */
-float axp202_get_batt_in_power()
+int axp202_get_batt_in_power()
 {
-    float rslt;
+    int rslt;
     uint8_t hv, mv, lv;
     _readByte(AXP202_BAT_POWERH8, 1, &hv);
     _readByte(AXP202_BAT_POWERM8, 1, &mv);
     _readByte(AXP202_BAT_POWERL8, 1, &lv);
     rslt = (hv << 16) | (mv << 8) | lv;
-    rslt = 2 * rslt * 1.1 * 0.5 / 1000;
+    rslt = rslt + rslt / 10;
     return rslt;
 }
 
-float axp202_get_batt_voltage()
+int axp202_get_batt_voltage()
 {
     return _getRegistResult(AXP202_BAT_AVERVOL_H8, AXP202_BAT_AVERVOL_L4) * AXP202_BATT_VOLTAGE_STEP;
 }
 
-float axp202_get_batt_charge_current()
+int axp202_get_batt_charge_current()
 {
     switch (_chip_id) {
     case AXP202_CHIP_ID:
@@ -251,6 +225,45 @@ float axp202_get_sys_IPSOUT_voltage()
 {
     return _getRegistResult(AXP202_APS_AVERVOL_H8, AXP202_APS_AVERVOL_L4);
 }
+
+int axp202_update()
+{
+	uint8_t charge1;
+	uint8_t percentage;
+	uint8_t status1, status2;
+	_readByte(AXP202_MODE_CHGSTATUS, 1, &status1);
+	_readByte(AXP202_CHARGE1, 1, &charge1);
+	_readByte(AXP202_BATT_PERCENTAGE, 1, &percentage);
+	_readByte(AXP202_STATUS, 1, &status2);
+
+	AXP202.settings.target_voltage = charge1 & 0x60;
+  	AXP202.settings.charging_current = 300 + 100*(charge1 & 0x7);
+	AXP202.settings.charging_enabled = charge1 & (1<<7);
+
+	AXP202.battery.percentage = percentage & 0x7F;
+	AXP202.battery.voltage = axp202_get_batt_voltage();
+	AXP202.battery.current = axp202_get_batt_discharge_current();
+	AXP202.battery.is_charging    = 0 == (status1 & (1<<6));
+	AXP202.battery.is_connected = 0 == (status1 & (1<<5));
+
+	AXP202.vbus.is_connected = 0 == (status2 & (1<<5));
+	AXP202.vbus.voltage = axp202_get_vbus_voltage();
+	AXP202.vbus.current = axp202_get_vbus_current();
+	
+	AXP202.temperature = axp202_get_temp();
+	return ESP_OK;
+}
+
+float axp202_get_acin_voltage()
+{
+    return _getRegistResult(AXP202_ACIN_VOL_H8, AXP202_ACIN_VOL_L4) * AXP202_ACIN_VOLTAGE_STEP;
+}
+
+float axp202_get_acin_current()
+{
+    return _getRegistResult(AXP202_ACIN_CUR_H8, AXP202_ACIN_CUR_L4) * AXP202_ACIN_CUR_STEP;
+}
+
 
 /*
 Coulomb calculation formula:
@@ -595,16 +608,8 @@ bool isTimerTimeoutIRQ()
 {
     return (bool)(_irq[4] & BIT_MASK(7));
 }
-
-bool isVBUSPlug()
-{
-    
-        
-    uint8_t reg;
-    _readByte(AXP202_STATUS, 1, &reg);
-    return IS_OPEN(reg, 5);
-}
 */
+
 /*
 int setDCDC2Voltage(uint16_t mv)
 {
@@ -912,19 +917,6 @@ int shutdown()
     _writeByte(AXP202_OFF_CTL, 1, &val);
     return AXP_PASS;
 }
-
-float getSettingChargeCurrent()
-{
-    uint8_t val;
-    
-        
-    _readByte(AXP202_CHARGE1, 1, &val);
-    val &= 0b00000111;
-    float cur = 300.0 + val * 100.0;
-    AXP_DEBUG("Setting Charge current : %.2f mA\n", cur);
-    return cur;
-}
-
 bool isChargeingEnable()
 {
     uint8_t val;
