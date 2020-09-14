@@ -1,37 +1,59 @@
 #pragma once
 
-#include <string.h>
-#include <stdlib.h>
-#include <freertos/FreeRTOS.h>
-#include <freertos/task.h>
-#include <esp_system.h>
-#include <esp_event.>"
-#include <esp_log.h>
+#include <stddef.h>
 
+
+typedef union
+{
+	uint16_t u16;
+	uint32_t u32;
+	uint8_t  u128[16];
+} ble_uuid_t;
+
+typedef uint8_t ble_address_t[6];
+
+typedef struct _ble_attr_t
+{
+	const char* name; //optionally set in code
+
+	ble_uuid_t* datatype,;
+	size_t 	    datasize;
+	void*       data;
+	struct _ble_attr_t* _next;
+	struct _ble_attr_t* _child;
+
+} ble_attribute_t;
 
 typedef struct
 {
-    	const char* ssid;
-  	const char* password;
+	const char* name; //optionally set in code
+	ble_uuid_t  uuid;
 
-	struct {
-		const char* url;
-		const char* pem;
-    	} ota;
-} wifi_t;
+	size_t datasize;
+	void*  data;
 
-#if CONFIG_LMTZ_WIFI
-#define WIFI_DEFAULT \
-{ \
-    .ssid = CONFIG_LMTZ_WIFI_SSID, \
-    .password = CONFIG_LMTZ_WIFI_PASSWORD, \
-    .ota = { \
-	    .url = CONFIG_LMTZ_WIFI_OTA_URL,\
-	    .pem = CONFIG_LMTZ_WIFI_OTA_PEM, \
-    }, \
-}
-#endif
+} ble_characteristic_t;
 
-int wifi_init(wifi_t* network);
-int wifi_ota_update(wifi_t* network);
-int wifi_destroy(wifi_t* network);
+typedef struct _ble_service_t
+{
+	const char*         name; //optionally set in code
+
+	ble_uuid_t          uuid;
+	ble_characteristic* characteristics;	
+	struct _ble_service_t* _next;
+} ble_service_t;
+
+typedef struct
+{
+	char* name;
+
+
+	ble_address_t  address;
+	ble_service_t* services;
+
+} ble_peripheral_t;
+
+typedef struct
+{
+
+} ble_central_t;

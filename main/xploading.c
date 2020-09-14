@@ -480,8 +480,8 @@ const LV_ATTRIBUTE_MEM_ALIGN LV_ATTRIBUTE_IMG_XPLOADING uint8_t xploading_map[] 
 
 const lv_img_dsc_t xploading = {
   .header.always_zero = 0,
-  .header.w = 200,
-  .header.h = 200,
+  .header.w = 212,
+  .header.h = 210,
   .data_size = 45544,
   .header.cf = LV_IMG_CF_INDEXED_8BIT,
   .data = xploading_map,

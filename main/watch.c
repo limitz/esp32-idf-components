@@ -15,10 +15,30 @@
 #include <axp202.h>
 #include "rc.h"
 
-#include "xploading.c"
+
+//#include "xploading.c"
+#include "../resources/w95_computer.c"
+#include "../resources/desktop.c"
 
 #define LDO_BACKLIGHT AXP202_LDO2
 #define nullptr NULL
+
+static lv_obj_t* p1;
+static lv_obj_t* p2;
+static float x = 0;
+static float y = 0;
+static float dx = 1.3;
+static float dy = 1.37;
+void on_frame()
+{
+	x += dx;
+	y += dy;
+	if (x > 208 || x < 0) x -= dx, dx = -dx;
+	if (y > 208 || y < 0) y -= dy, dy = -dy;
+		
+	lv_obj_set_pos(p1, (int)x, (int)y);
+	lv_obj_invalidate(gui_root());
+}
 
 void do_wakeup()
 {
@@ -95,14 +115,28 @@ void app_main()
 	lv_obj_align(arc, NULL, LV_ALIGN_CENTER, 0, 0);
 #endif
 
-	lv_obj_t* background = lv_img_create(gui_root(), NULL);
-	lv_obj_add_style(background, LV_IMG_PART_MAIN, &nostyle);
-	lv_obj_set_size(background, 212, 210);
-	lv_img_set_src(background, &xploading);
-	lv_obj_align(background, NULL, LV_ALIGN_CENTER, 0, 0);
+	p2 = lv_img_create(lv_scr_act(), NULL);
+	lv_img_set_src(p2, &desktop);
+
+	p1 = lv_img_create(lv_scr_act(), NULL);
+	lv_img_set_src(p1, &w95_computer);
+	//lv_obj_align(p1, NULL, LV_ALIGN_CENTER, -32, -32);
+
+
+	
+#if 0
+	size_t image_nbytes = 240 * 240 * 2;
+	static lv_color_t* image = (lv_color_t*) malloc(nbytes);
+	memset(image, 0x80, nbytes);
+	static lv_obj_t* canvas = lv_canvas_create(gui_root(), NULL);
+
+#endif
+
+	//gui_start(true);
+
+	GUI.on_frame = on_frame;
 
 	do_wakeup();
-
 	for (int i=1;1;i++)
 	{
 		ft5206_read_touches();
@@ -121,7 +155,14 @@ void app_main()
 				AXP202.vbus.is_connected ? "OK:" : "NA!",
 				AXP202.vbus.voltage,
 				AXP202.vbus.current);
-				do_sleep();
+			//	do_sleep();
+
+		
+
+
+
+
+
 		}
 
 		if (FT5206.touch.count == 1)
@@ -136,6 +177,7 @@ void app_main()
 			RC.payload.steering = 0;
 			RC.payload.throttle = 0;
 		}
+
 
 		//ESP_LOG_BUFFER_HEX("PAYLOAD", &RC.packets.controls.payload, sizeof(rc_payload_t));
 		vTaskDelay(20 / portTICK_PERIOD_MS);
