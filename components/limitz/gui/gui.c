@@ -33,7 +33,6 @@ gui_driver_t GUI = {};
 
 static void proc_tick(void* args)
 {
-	if (GUI.on_frame) GUI.on_frame();
 	lv_tick_inc(LV_TICK_PERIOD_MS);
 }
 
@@ -105,6 +104,7 @@ static void task_gui(void* args)
                 vTaskDelay(1);
                 if (xSemaphoreTake(s_lock_ui, (TickType_t) 10) == pdTRUE)
                 {
+			if (GUI.on_frame) GUI.on_frame();
                         lv_task_handler();
                         xSemaphoreGive(s_lock_ui);
                 }
@@ -139,15 +139,15 @@ int gui_init()
         lv_style_set_outline_width(s, LV_STATE_DEFAULT, 0);
         lv_style_set_radius(s, LV_STATE_DEFAULT, 0);
         lv_style_set_bg_opa(s, LV_STATE_DEFAULT, LV_OPA_100);
-        lv_style_set_bg_color(s, LV_STATE_DEFAULT, LV_COLOR_MAKE(0x00, 0x90, 0x80));
-        lv_style_set_image_recolor(s, LV_STATE_DEFAULT, LV_COLOR_WHITE);
-        lv_style_set_image_recolor_opa(s, LV_STATE_DEFAULT, LV_OPA_100);
+        lv_style_set_bg_color(s, LV_STATE_DEFAULT, LV_COLOR_MAKE(0x33, 0x33, 0x33));
+        //lv_style_set_image_recolor(s, LV_STATE_DEFAULT, LV_COLOR_WHITE);
+        //lv_style_set_image_recolor_opa(s, LV_STATE_DEFAULT, LV_OPA_100);
         lv_style_set_text_font(s, LV_STATE_DEFAULT, &lv_font_unscii_8);
         lv_style_set_text_color(s, LV_STATE_DEFAULT, LV_COLOR_MAKE(0xCC,0xCC,0xCC));
         lv_style_set_line_rounded(s, LV_STATE_DEFAULT, true);
 
 
-	s_screen = lv_obj_create(lv_scr_act(), NULL);
+	s_screen = lv_scr_act(); //lv_obj_create(lv_scr_act(), NULL);
 	lv_obj_add_style(s_screen, LV_OBJ_PART_MAIN, &s_background);
 	lv_obj_set_size(s_screen, CONFIG_LVGL_DISPLAY_WIDTH, CONFIG_LVGL_DISPLAY_HEIGHT);
 	lv_obj_set_pos(s_screen, 0, 0);
