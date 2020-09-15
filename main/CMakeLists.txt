@@ -1,6 +1,7 @@
 idf_component_register(SRCS
-		"rc.c"
+		#"rc.c"
 		#"vehicle.c"
-		"watch.c"
+		#"watch.c"
 		#"camera.c"
+		"lvgl_bug.c"
 		INCLUDE_DIRS ".")

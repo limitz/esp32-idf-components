@@ -178,8 +178,7 @@ int gui_start(bool animate)
 	}
 
 	backlight_fade_to(60, CONFIG_LMTZ_BACKLIGHT_SCALE_ON);
-	xTaskCreatePinnedToCore(task_gui, "GUI task", 4096, NULL, 0, &s_main_task_handle, 1);
-
+	xTaskCreatePinnedToCore(task_gui, "GUI task", 4096, NULL, 0, &s_main_task_handle, 0);
 
 	return ESP_OK;
 }
