@@ -1,0 +1,47 @@
+menu "LIMITZ networking"
+	config LMTZ_WIFI
+		prompt "Connect to WIFI"
+		bool
+		default n
+
+		config LMTZ_WIFI_SSID
+			depends on LMTZ_WIFI
+			prompt "SSID"
+			string
+			default "LimitzNet"
+
+		config LMTZ_WIFI_PASSWORD
+			depends on LMTZ_WIFI
+			prompt "Password"
+			string
+			default "LimitzNet"
+
+	config LMTZ_SERVER
+		prompt "Start server" if !LMTZ_ESPNOW
+		bool
+		default n
+
+		config LMTZ_SERVER_PORT
+			depends on LMTZ_SERVER
+			prompt "Server listens on port"
+			int
+			default 13666
+	
+	config LMTZ_CLIENT
+		prompt "Start client"
+		bool
+		default n
+
+		config LMTZ_SERVER_IP
+			depends on LMTZ_CLIENT
+			prompt "Client connects to IP"
+			string
+			default "127.0.0.1"
+
+		config LMTZ_SERVER_PORT
+			depends on LMTZ_CLIENT
+			prompt "Client connects to port"
+			int
+			default 13666
+endmenu
+
