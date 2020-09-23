@@ -13,6 +13,7 @@
 #include <freertos/task.h>
 #include <esp_event_loop.h>
 #include <sys/param.h>
+#include <esp_private/wifi.h>
 
 #include <radio.h>
 #include <esp_camera.h>
@@ -33,95 +34,7 @@ extern camera_t CAMERA;
 
 #define L1 32
 #define L2 1000
-
-static lv_obj_t* s_canvas;
-
-//sreen
-static lv_coord_t s_W = 135;
-static lv_coord_t s_H = 240;
-
-//canvas
-static lv_coord_t s_w = 120;
-static lv_coord_t s_h = 120;
-
-//block
-static lv_coord_t s_wc = 50;
-static lv_coord_t s_hc = 30;
-
-static int s_type = LV_IMG_CF_INDEXED_4BIT;
-static int s_bpp;        //lv_img_cf_get_px_size(type);
-static int s_nbytes;     // = lv_img_buf_get_img_size(w,  h,  type);	
-static int s_tocopy;     // = lv_img_buf_get_img_size(wc, hc, type);
-static int s_src_stride; // = lv_img_buf_get_img_stride(wc, type);
-static int s_dst_stride; //= lv_img_buf_get_img_stride(w, type);
-
-static uint8_t* s_custom_1;
-static uint8_t* s_custom_2;
-
-void on_success(int dx, int dy)
-{
-	int skip_palette = lv_img_buf_get_palette_size(s_type);	
-	void* cbuf = heap_caps_calloc(s_tocopy, 1, MALLOC_CAP_8BIT);
-	for (int y=0; y<s_hc; y++)
-	{
-		for (int x=0; x < s_wc; x++)
-		{
-			int py = (y / 2) * 0x11;
-			((uint8_t*)cbuf)[skip_palette + y * s_src_stride + x * s_bpp / 8] = py;
-		}
-	}
-	lv_canvas_copy_buf(s_canvas, cbuf, dx, dy, s_wc, s_hc); // center it
-}
-
-static int handle_receive(const radio_packet_t* packet)
-{
-	switch (packet->header.type)
-	{
-		case RADIO_PACKET_TYPE_CUSTOM+1:
-		{	
-			//on error
-			if (memcmp(packet->payload, s_custom_1, 32)) 
-				on_success(0,0);
-			break;
-		}
-		case RADIO_PACKET_TYPE_CUSTOM+2:
-		{
-			if (memcmp(packet->payload, s_custom_2 + packet->header.offset, packet->header.length))
-				on_success(20,100);
-			break;
-		}
-	}
-	return RADIO_OK;
-}
-
 #define ESP_INTR_FLAG_DEFAULT 0
-static xQueueHandle gpio_evt_queue = NULL;
-
-static void IRAM_ATTR gpio_isr_handler(void* arg)
-{
-	uint32_t gpio_num = (uint32_t) arg;
-	xQueueSendFromISR(gpio_evt_queue, &gpio_num, NULL);
-}
-
-static void gpio_task_example(void* arg)
-{
-	uint32_t io_num;
-	for(;;) 
-	{
-		if(xQueueReceive(gpio_evt_queue, &io_num, portMAX_DELAY)) 
-		{
-			ESP_LOGW(__func__, "BUTTON %d", io_num);
-			if (io_num == B1)
-			{
-				radio_broadcast(RADIO_PACKET_TYPE_CUSTOM+1, s_custom_1, L1);
-			}
-			if (io_num == B2)
-			{
-				radio_broadcast(RADIO_PACKET_TYPE_CUSTOM+2, s_custom_2, L2);
-			}
-		}
-	}
-}
 
 camera_t CAMERA = {
 	.config = {
@@ -188,11 +101,6 @@ void app_main()
 	ESP_ERROR_CHECK( nvs_flash_init() );
 	//ESP_ERROR_CHECK( gui_init() );
 
-	s_custom_1 = (uint8_t*)malloc(L1);
-	s_custom_2 = (uint8_t*)malloc(L2);
-
-	for (int i=0; i<L1; i++) s_custom_1[i] = i;
-	for (int i=0; i<L2; i++) s_custom_2[i] = i;
 
 	_camera_init();
 
@@ -213,9 +121,12 @@ void app_main()
     	gpio_isr_handler_add(B2, gpio_isr_handler, (void*) B2);
 	
 */
-	RADIO.callbacks.on_receive=handle_receive;
+	//RADIO.callbacks.on_receive=handle_receive;
 	radio_init();
 
+	esp_wifi_internal_set_fix_rate(ESPNOW_WIFI_IF, 1, 
+			WIFI_PHY_RATE_11M_L);
+			//WIFI_PHY_RATE_MCS7_SGI);
 	//gui_start(false);
 	/*
 	s_type = LV_IMG_CF_INDEXED_4BIT;
@@ -264,7 +175,6 @@ void app_main()
 	
 	lv_obj_set_pos(s_canvas, (s_W - s_w) / 2, (s_H - s_h) / 2);
 	*/
-	int discover = 0;
 
 	for (;;)
 	{

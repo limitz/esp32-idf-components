@@ -145,7 +145,7 @@ int radio_init()
 	};
 	ESP_ERROR_CHECK( esp_now_add_peer(&broadcast) );
 
-	xTaskCreate(radio_task, "radio task", 4096, NULL, 4, &RADIO.task);
+	xTaskCreate(radio_task, "radio task", 16384, NULL, 4, &RADIO.task);
 	return ESP_OK;
 }
 

@@ -17,22 +17,25 @@
 
 #include <i2cbus.h>
 #include <radio.h>
-#include <esp_camera.h>
 #include <axp202.h>
 #include <ft5206.h>
 #include <esp32/rom/tjpgd.h>
+#include <esp_private/wifi.h>
+
 
 #define WIDTH 240
 #define HEIGHT 240
 #define TYPE LV_IMG_CF_TRUE_COLOR
 #define LDO_BACKLIGHT AXP202_LDO2
 
-#define STREAM_WIDTH 336
-#define STREAM_HEIGHT 256
+#define STREAM_WIDTH 320
+#define STREAM_HEIGHT 240
 #define WORKSPACE 3100
 
 extern const uint8_t image_jpg_start[] asm("_binary_image_jpg_start");
 extern const uint8_t image_jpg_end[]   asm("_binary_image_jpg-end");
+
+QueueHandle_t decomp_queue;
 
 typedef struct
 {
@@ -43,7 +46,7 @@ typedef struct
 
 	struct
 	{
-		const uint8_t *data;
+		uint8_t *data;
 		int width, height, pos;
 	} in;
 
@@ -55,24 +58,32 @@ typedef struct
 
 } jpg_dev_t;
 
+typedef struct {
+	void* data;
+	int offset;
+	int length;
+} datareader_t;
+
 static jpg_dev_t* s_devptr = NULL;
 
 static UINT in_cb(JDEC *decoder, BYTE* buf, UINT len)
 {
-	jpg_dev_t* dev = (jpg_dev_t*) decoder->device;
-	if (buf) memcpy(buf, dev->in.data + dev->in.pos, len);
-	dev->in.pos += len;
+	datareader_t* dr = (datareader_t*)decoder->device;
+	//ESP_LOGI(__func__, "Reading (%d +%d) of %d", dr->offset, len,  dr->length);
+	if (len && buf) memcpy(buf, dr->data + dr->offset, len);
+	dr->offset += len;
 	return len;
 }
 
 static UINT out_cb(JDEC *decoder, void* bitmap, JRECT *r)
 {
-	jpg_dev_t* dev = (jpg_dev_t*) decoder->device;
+	jpg_dev_t* dev = s_devptr;
+	//datareader_t* dr = (datareader*)decoder->device;
 
 	uint8_t* ptr = (uint8_t*) bitmap;
 	int w = 1+(r->right - r->left);
 	int h = 1+(r->bottom - r->top);
-	ESP_LOGW(__func__, "%d,%d %dx%d", r->left, r->top,  w, h);
+	//ESP_LOGW(__func__, "%d,%d %dx%d", r->left, r->top,  w, h);
 
 	if (r->right >= WIDTH) return 1;
 	if (r->bottom >= HEIGHT) return 1;
@@ -97,44 +108,70 @@ static UINT out_cb(JDEC *decoder, void* bitmap, JRECT *r)
 			pdst[col].ch.green_h = 0x07 & ptr[row * w * 3 + col * 3 + 1] >> 5;
 			pdst[col].ch.green_l = 0x07 & ptr[row * w * 3 + col * 3 + 1] >> 2;
 			pdst[col].ch.blue    = 0x1F & ptr[row * w * 3 + col * 3 + 2] >> 3;
-			
-
-			//lv_color_t * pdst = ((lv_color_t* )dev->out.data) + y * w + x;
-			//*pdst = LV_COLOR_MAKE(x,y,0);
-		
-			//dev->out.data[0] = 0xFF;
-//			pdst[2] = i;
-
-				//((uint16_t*)bitmap)[j * w + i + r->left] = (cr<<11) | (cg <<5) | cb;
 		}
 	}
 
-	//lv_canvas_copy_buf(dev->canvas, bitmap, r->left, r->top, w, h);
 	return 1;
+}
+
+
+
+// make a queue aruund this 
+void decoder_task(void* param)
+{
+	datareader_t* dr;
+	while (pdTRUE == xQueueReceive(decomp_queue, &dr, portMAX_DELAY))
+	{
+		if (dr->data)
+		{
+			int err = jd_prepare(&s_devptr->_decoder, in_cb, s_devptr->in.data+8192, WORKSPACE, dr);
+			if (JDR_OK != err)
+			{
+				heap_caps_free(dr->data);
+				free(dr);
+				ESP_LOGW(__func__, "Error during prepare jpeg %08X", err);
+				continue;
+			}
+	
+	
+			err = jd_decomp(&s_devptr->_decoder, out_cb, 0);
+			if (JDR_OK != err)
+			{
+				ESP_LOGW(__func__, "Error during decomp %08X", err);
+				heap_caps_free(dr->data);
+				free(dr);
+				continue;
+			}
+
+			lv_obj_invalidate(s_devptr->canvas);
+			heap_caps_free(dr->data);
+			free(dr);
+
+		}
+	}
 }
 
 static int handle_receive(const radio_packet_t* p)
 {
 	switch (p->header.type)
 	{
-		case 5: //RADIO_PACKET_TYPE_CUSTOM+3:
+	case 5: //RADIO_PACKET_TYPE_CUSTOM+3:
+		
+		memcpy(((uint8_t*)s_devptr->in.data)+p->header.offset, p->payload, p->header.length);
 		if (p->header.offset > 0 && p->header.length < RADIO_PACKET_MAX_PAYLOAD)
 		{
-			if (s_devptr->in.data) {
-				//jd_prepare(&s_devptr->_decoder, in_cb, s_devptr->_work, WORKSPACE, &s_devptr);
-				//jd_decomp(&s_devptr->_decoder, out_cb, 0);
-			}
-			else {
-				//s_devptr->in.data = heap_caps_calloc(8192, 1, MALLOC_CAP_8BIT);
-				//s_devptr->in.pos = 0;
-			}
+			datareader_t* dr = malloc(sizeof(datareader_t));
+			dr->data = s_devptr->in.data;
+			s_devptr->in.data = heap_caps_calloc(8192+WORKSPACE, 1, MALLOC_CAP_8BIT);
+			dr->offset = 0;
+			dr->length = p->header.offset + p->header.length;
+			xQueueSend(decomp_queue, &dr, 1);
 		}
-		//else if (s_devptr->in.data) memcpy(s_devptr->in.data+p->header.offset, p->payload, p->header.length);
+
 		break;
 	}
 	return RADIO_OK;
 }
-
 void app_main()
 {
 	RADIO.callbacks.on_receive=handle_receive;
@@ -151,22 +188,22 @@ void app_main()
 	gui_start(false);
 	axp202_set_output(LDO_BACKLIGHT, AXP202_ON);
 
-	jpg_dev_t dev = {
-		.canvas = lv_canvas_create(lv_scr_act(), NULL),
+	static jpg_dev_t dev = {
 
 		.in.width = STREAM_WIDTH,
 		.in.height = STREAM_HEIGHT,
 		.in.pos = 0,
-		.in.data = heap_caps_calloc(8192, 1, MALLOC_CAP_8BIT),
 
 		.out.width = WIDTH,
 		.out.height = HEIGHT,
-		.out.data = heap_caps_calloc(
-			lv_img_buf_get_img_size(WIDTH, HEIGHT, TYPE), 1, 
-			 MALLOC_CAP_8BIT),
 		
-		._work = heap_caps_calloc(WORKSPACE, 1, MALLOC_CAP_8BIT),
 	};
+	dev.canvas = lv_canvas_create(lv_scr_act(), NULL);
+	dev.in.data = heap_caps_calloc(8192+WORKSPACE, 1, MALLOC_CAP_8BIT);
+	dev.out.data = heap_caps_calloc(
+			lv_img_buf_get_img_size(WIDTH, HEIGHT, TYPE), 1, 
+			 MALLOC_CAP_8BIT);
+	dev._work = heap_caps_calloc(WORKSPACE, 1, MALLOC_CAP_8BIT);
 
 	for (int r=0; r<HEIGHT; r++)
 	{
@@ -179,6 +216,9 @@ void app_main()
 	lv_obj_set_pos(dev.canvas, 0, 0);
 	lv_obj_set_size(dev.canvas, WIDTH, HEIGHT);
 
+#if 0
+#define STREAM_WIDTH 336
+#define STREAM_HEIGHT 256
 	dev.in.data = image_jpg_start;
 	int err = jd_prepare(&dev._decoder, in_cb, dev._work, WORKSPACE, &dev);
 	if (JDR_OK != err) 
@@ -195,14 +235,22 @@ void app_main()
 		ESP_LOGE(__func__, "JD_DECOMPE: %02x", err);
 		ESP_ERROR_CHECK(ESP_ERR_NOT_SUPPORTED);
 	}
+#endif
 
 	lv_canvas_set_buffer(dev.canvas, dev.out.data, WIDTH, HEIGHT, TYPE);
 	lv_obj_invalidate(dev.canvas);
-	
 
+	decomp_queue = xQueueCreate(20, sizeof(datareader_t*));
+
+	xTaskCreate(decoder_task, "decoder task", 4096, NULL, 4, NULL);
+	
 	s_devptr = &dev;
 	ESP_ERROR_CHECK( radio_init() );
-	
+
+	//esp_wifi_internal_set_fix_rate(ESPNOW_WIFI_IF, 1, WIFI_PHY_RATE_MCS7_SGI);
+	esp_wifi_internal_set_fix_rate(ESPNOW_WIFI_IF, 1, 
+			WIFI_PHY_RATE_11M_L);
+
 	for (;;)
 	{
 		ft5206_read_touches();
