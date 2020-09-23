@@ -12,9 +12,9 @@ menu "LIMITZ Radio"
 
 		config LMTZ_RADIO_PACKET_PAYLOAD_SIZE
 		depends on LMTZ_RADIO
-		int "Packet payload size"
-		default 64
-		range 16 240
+		int "Packet payload capacity"
+		default 128
+		range 16 224
 
 		config LMTZ_RADIO_LONGRANGE
 		depends on LMTZ_RADIO
@@ -33,5 +33,10 @@ menu "LIMITZ Radio"
 		string "Local master key (must be 16 chars long)"
 		default "LMTZLMK_01234567"
 
+		config LMTZ_RADIO_PACKET_QUEUE_LEN
+		depends on LMTZ_RADIO
+		int "RX Packet queue size"
+		default 10
+		
 endmenu
 

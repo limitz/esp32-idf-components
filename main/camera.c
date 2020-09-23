@@ -59,15 +59,6 @@ int _camera_capture()
 }
 
 
-void app_main()
+void camera_task()
 {
-	ESP_ERROR_CHECK(_camera_init());
-
-	radio_init();
-
-	for (;;)
-	{
-		ESP_ERROR_CHECK(_camera_capture());
-		vTaskDelay(5000 / portTICK_PERIOD_MS);
-	}
 }

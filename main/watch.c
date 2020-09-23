@@ -9,10 +9,10 @@
 #include <driver/gpio.h>
 
 #include <i2cbus.h>
-#include <ft5206.h>
 #include <bma.h>
 #include <gui.h>
 #include <axp202.h>
+#include <ft5206.h>
 #include "rc.h"
 
 
