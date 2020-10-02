@@ -1,5 +1,7 @@
 #include <radio.h>
 
+#if CONFIG_LMTZ_RADIO_EN
+
 radio_t RADIO =  
 {
 	.identity = {
@@ -145,7 +147,7 @@ int radio_init()
 	};
 	ESP_ERROR_CHECK( esp_now_add_peer(&broadcast) );
 
-	xTaskCreate(radio_task, "radio task", 16384, NULL, 4, &RADIO.task);
+	xTaskCreate(radio_task, "radio task", 4096, NULL, 4, &RADIO.task);
 	return ESP_OK;
 }
 
@@ -198,3 +200,5 @@ int radio_deinit(radio_t* self)
 	esp_now_deinit();
 	return ESP_OK;
 }
+
+#endif

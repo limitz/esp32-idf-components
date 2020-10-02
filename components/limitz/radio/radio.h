@@ -1,5 +1,6 @@
 #pragma once
 
+
 #include <assert.h>
 #include <string.h>
 #include <stdlib.h>
@@ -23,18 +24,24 @@
 #define RADIO_BROADCAST_ADDRESS { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF }
 #define ESPNOW_WIFI_MODE WIFI_MODE_STA
 #define ESPNOW_WIFI_IF   ESP_IF_WIFI_STA
-
 #define RADIO_KEY_SIZE ESP_NOW_KEY_LEN
+
+#if !CONFIG_LTMTZ_RADIO_EN
+#define RADIO_PACKET_MTU (sizeof(radio_packet_header_t))
+#define RADIO_PACKET_QUEUE_LEN 0
+#else
 #define RADIO_PACKET_MTU (CONFIG_LMTZ_RADIO_PACKET_PAYLOAD_SIZE + sizeof(radio_packet_header_t))
 #define RADIO_PACKET_QUEUE_LEN CONFIG_LMTZ_RADIO_PACKET_QUEUE_LEN
+#endif
+
 #define RADIO_ACCEPT_ANY ((radio_packet_cb) 0x1)
 #define RADIO_ACCEPT_NONE NULL
-
 
 enum 
 {
 	RADIO_PACKET_TYPE_IDENTITY = 0x00,
 	RADIO_PACKET_TYPE_DATA = 0x01,
+	RADIO_PACKET_TYPE_ACK = 0x02,
 
 	RADIO_PACKET_TYPE_CUSTOM
 };

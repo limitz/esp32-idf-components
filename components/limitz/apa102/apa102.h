@@ -22,31 +22,6 @@ typedef uint32_t apa102_color_t;
 
 #define CONFIG_LMTZ_APA102_MAX_TRANSFER (8*((2+CONFIG_LMTZ_APA102_NUM_LEDS)*sizeof(apa102_color_t)))
 
-#define APA102 { \
-	.phase = 0, \
-	.device = 0, \
-	.count = CONFIG_LMTZ_APA102_NUM_LEDS, \
-	.spi_host = CONFIG_LMTZ_APA102_SPI_HOST, \
-	.dma_channel = CONFIG_LMTZ_APA102_DMA_CHANNEL, \
-	.transaction = { \
-		.length = CONFIG_LMTZ_APA102_MAX_TRANSFER, \
-	}, \
-	.bus_config = { \
-		.miso_io_num = -1, \
-		.mosi_io_num = CONFIG_LMTZ_APA102_PIN_MOSI, \
-		.sclk_io_num = CONFIG_LMTZ_APA102_PIN_SCLK, \
-		.quadwp_io_num = -1, \
-		.quadhd_io_num = -1, \
-		.max_transfer_sz = CONFIG_LMTZ_APA102_MAX_TRANSFER, \
-	}, \
-	.dev_config = { \
-		.clock_speed_hz = CONFIG_LMTZ_APA102_CLOCK_SPEED, \
-		.mode = 3, \
-		.spics_io_num = -1,\
-		.queue_size = 1, \
-	}\
-}
-
 typedef struct
 {
 	union 
@@ -55,7 +30,11 @@ typedef struct
 		apa102_color_t* leds;
 	};
 		//[CONFIG_LMTZ_APA102_MAX_TRANSFER/sizeof(apa102_color_t)];
-	
+
+	int (*init)();
+	int (*deinit)();
+	int (*update)();
+
 	uint16_t phase;
 	int spi_host;
 	int dma_channel;
@@ -66,8 +45,6 @@ typedef struct
 	spi_device_handle_t device;
 } apa102_t;
 
-typedef void (*apa102_refresh_cb)(apa102_t* sender, apa102_color_t* color, size_t len, void* context);
+//typedef void (*apa102_refresh_cb)(apa102_t* sender, apa102_color_t* color, size_t len, void* context);
 
-esp_err_t apa102_init(apa102_t* self);
-esp_err_t apa102_update(apa102_t* self); //, apa102_refresh_cb cb, void* context);
-esp_err_t apa102_destroy(apa102_t* self);
+extern apa102_t APA102;

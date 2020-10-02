@@ -36,15 +36,14 @@ static void proc_tick(void* args)
 	lv_tick_inc(LV_TICK_PERIOD_MS);
 }
 
-#if CONFIG_LMTZ_BACKLIGHT_PWM_EN
 
 static int backlight_fade_to(int level, int time)
 {
+#if CONFIG_LMTZ_BACKLIGHT_PWM_EN
 #if 1
 	ledc_set_duty_and_update(LEDC_HIGH_SPEED_MODE, CONFIG_LMTZ_BACKLIGHT_CHANNEL,
 			level * ((1<<CONFIG_LMTZ_BACKLIGHT_PWM_BITS)-1)/100,
 			0xFFFFF);
-	return ESP_OK;
 #else
 
 	if (ESP_ERR_INVALID_STATE == ledc_fade_func_install(0)) return ESP_FAIL;
@@ -60,6 +59,8 @@ static int backlight_fade_to(int level, int time)
 	
 	return ESP_OK;
 #endif
+#endif
+	return ESP_OK;
 }
 
 static void task_wakeup()
@@ -73,6 +74,7 @@ static void task_sleep()
 
 static void backlight_init()
 {
+#if CONFIG_LMTZ_BACKLIGHT_PWM_EN
         ledc_timer_config_t timer = {
                 .duty_resolution = CONFIG_LMTZ_BACKLIGHT_PWM_BITS, //LEDC_TIMER_15_BIT,
                 .freq_hz = CONFIG_LMTZ_BACKLIGHT_PWM_FREQ,
@@ -90,12 +92,11 @@ static void backlight_init()
                 .timer_sel = CONFIG_LMTZ_BACKLIGHT_TIMER, //LEDC_TIMER_0,
         };
       	ESP_ERROR_CHECK(ledc_channel_config(&channel));
-
+#endif
 //	task_wakeup();
 	//xTaskCreatePinnedToCore(task_wakeup, "wakeup", 2048, NULL, 0, NULL, 1);
 }
 
-#endif
 
 static void task_gui(void* args)
 {
@@ -177,9 +178,10 @@ int gui_start(bool animate)
 		proc_tick(NULL);
 	}
 
+#if CONFIG_LMTZ_BACKLIGHT_PWM_EN
 	backlight_fade_to(60, CONFIG_LMTZ_BACKLIGHT_SCALE_ON);
+#endif
 	xTaskCreatePinnedToCore(task_gui, "GUI task", 4096, NULL, 0, &s_main_task_handle, 0);
-
 	return ESP_OK;
 }
 
@@ -187,10 +189,10 @@ int gui_stop(bool animate)
 {
 	vTaskDelete(s_main_task_handle);
 	
-	backlight_fade_to(0, CONFIG_LMTZ_BACKLIGHT_SCALE_ON);
-	
+#if CONFIG_LMTZ_BACKLIGHT_PWM_EN
+	backlight_fade_to(0, CONFIG_LMTZ_BACKLIGHT_SCALE_ON);	
 	ESP_ERROR_CHECK(esp_timer_stop(s_periodic_timer));
-	
+#endif
 	return ESP_OK;
 }
 

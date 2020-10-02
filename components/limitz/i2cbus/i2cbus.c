@@ -1,19 +1,21 @@
 #include "i2cbus.h"
 
-#define CLEANUP _ ## __func__ ##_cleanup
-
 static i2cbus_t s_bus[I2C_BUS_COUNT] = 
 {
+#if CONFIG_LMTZ_I2C_BUS0_EN
 	{
 		.frequency = I2C_BUS0_FREQ,
 		.pin.SDA   = I2C_BUS0_SDA,
 		.pin.SCL   = I2C_BUS0_SCL,
 	},
+#endif
+#if CONFIG_LMTZ_I2C_BUS1_EN
 	{
 		.frequency = I2C_BUS1_FREQ,
 		.pin.SDA   = I2C_BUS1_SDA,
 		.pin.SCL   = I2C_BUS1_SCL,
-	}
+	},
+#endif
 };
 
 int i2cbus_init(i2cbus_t* bus)
