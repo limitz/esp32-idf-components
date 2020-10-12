@@ -12,15 +12,23 @@
 
 typedef uint32_t apa102_color_t;
 
-#define APA102_COLOR(r,g,b,lum) ((r<<24) | (g<<16) | (b<<8) | ((lum)) | 0xE0) 
+// every element is scaled from 0 to 0xFF
+#define APA102_RGBL(r,g,b,lum) ((((r) & 0xFF)<<24) | (((g) & 0xFF)<<16) | (((b) & 0xFF)<<8) | ((((lum) & 0xFF) >> 3)) | 0xE0) 
+#define APA102_RGB32(v) (\
+	  ((v) << 8)  \
+	|(((v) >> 24) \
+	? ((v) >> 27) \
+	: 0x0000001F) \
+	| 0x000000E0;
+
+#define RGBL  APA102_RGBL
+#define RGB32 APA102_RGB32
 
 #if (CONFIG_LMTZ_APA102_SPI_HSPI)
 #define CONFIG_LMTZ_APA102_SPI_HOST HSPI_HOST
 #elif (CONFIG_LMTZ_APA102_SPI_VSPI)
 #define CONFIG_LMTZ_APA102_SPI_HOST VSPI_HOST
 #endif
-
-#define CONFIG_LMTZ_APA102_MAX_TRANSFER (8*((2+CONFIG_LMTZ_APA102_NUM_LEDS)*sizeof(apa102_color_t)))
 
 typedef struct
 {
@@ -31,8 +39,9 @@ typedef struct
 	};
 		//[CONFIG_LMTZ_APA102_MAX_TRANSFER/sizeof(apa102_color_t)];
 
-	int (*init)();
+	int (*init)(int nleds);
 	int (*deinit)();
+	int (*refresh)();
 	int (*update)();
 
 	uint16_t phase;
@@ -43,8 +52,11 @@ typedef struct
 	spi_device_interface_config_t dev_config;
 	spi_transaction_t transaction;
 	spi_device_handle_t device;
-} apa102_t;
+
+} apa102_driver_t;
 
 //typedef void (*apa102_refresh_cb)(apa102_t* sender, apa102_color_t* color, size_t len, void* context);
 
-extern apa102_t APA102;
+extern apa102_driver_t APA102;
+
+#define LEDSTRIP APA102

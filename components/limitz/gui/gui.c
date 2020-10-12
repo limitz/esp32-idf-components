@@ -37,9 +37,9 @@ static void proc_tick(void* args)
 }
 
 
+#if CONFIG_LMTZ_BACKLIGHT_PWM_EN
 static int backlight_fade_to(int level, int time)
 {
-#if CONFIG_LMTZ_BACKLIGHT_PWM_EN
 #if 1
 	ledc_set_duty_and_update(LEDC_HIGH_SPEED_MODE, CONFIG_LMTZ_BACKLIGHT_CHANNEL,
 			level * ((1<<CONFIG_LMTZ_BACKLIGHT_PWM_BITS)-1)/100,
@@ -59,15 +59,15 @@ static int backlight_fade_to(int level, int time)
 	
 	return ESP_OK;
 #endif
-#endif
 	return ESP_OK;
 }
+#endif
 
-static void task_wakeup()
+void task_wakeup()
 {
 }
 
-static void task_sleep()
+void task_sleep()
 {
 }
 
@@ -93,7 +93,7 @@ static void backlight_init()
         };
       	ESP_ERROR_CHECK(ledc_channel_config(&channel));
 #endif
-//	task_wakeup();
+	task_wakeup();
 	//xTaskCreatePinnedToCore(task_wakeup, "wakeup", 2048, NULL, 0, NULL, 1);
 }
 
